@@ -1,0 +1,6 @@
+Flask
+numpy
+scikit-learn
+pandas
+flask-restx
+werkzeug==2.1.2
