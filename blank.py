@@ -1,88 +1,62 @@
-#import model # Import the python file containing the ML model
-#from flask import Flask, request, render_template,jsonify # Import flask libraries
-#from flask_restx import Resource, Api # Api 구현을 위한 Api 객체 import
+import pandas as pd
+#import psycopg2.extras
+#from sqlalchemy import create_engine
 
-# Initialize the flask class and specify the templates directory
-#app = Flask(__name__,template_folder="templates")
-#api = Api(app)  # Flask 객체에 Api 객체 등록
+import pymysql
+from sqlalchemy import create_engine, text
+from datetime import datetime, timedelta
 
-#todos = {}
-#count = 1
+#conn = psycopg2.connect(host='192.168.55.115', user='aistudy', password='aistudy', dbname='2022_aistudy', port=30432)
 
-# Default route set as 'home'
-#@app.route('/home')
-#def home():
-#    return render_template('home.html') # Render home.html
+#engine = create_engine('postgresql://aistudy:aistudy@192.168.55.115:30432/2022_aistudy')
+#conn2 = engine.connect()
 
-# Route 'classify' accepts GET request
-#@app.route('/classify',methods=['POST','GET'])
-#def classify_type():
-#    try:
-#        sepal_len = request.args.get('slen') # Get parameters for sepal length
-#        sepal_wid = request.args.get('swid') # Get parameters for sepal width
-#        petal_len = request.args.get('plen') # Get parameters for petal length
-#        petal_wid = request.args.get('pwid') # Get parameters for petal width
+#db_test = pd.read_sql_table('titanic', conn2)
 
-        # Get the output from the classification model
-#        variety = model.classify(sepal_len, sepal_wid, petal_len, petal_wid)
+#pd.DataFrame(db_test)
 
-        # Render the output in new HTML page
-#        return render_template('output.html', variety=variety)
-#    except:
-#        return 'Error'
+# 한시간 후
+def after_one_hour(now):
+    return now + timedelta(hours=1)
 
-#@api.route('/hello')  # 데코레이터 이용, '/hello' 경로에 클래스 등록
-#class HelloWorld(Resource):
-#    def get(self):  # GET 요청시 리턴 값에 해당 하는 dict를 JSON 형태로 반환
-#        return {"hello": "world!"}
+# 특정 종목 한 시간 후 데이터
+def stock_after_one_hour(stock):
+  condition = (df.stock == stock) # 조건식 작성
+  df2 = df.loc[condition]
+  df2.reset_index(drop=True, inplace=True)
 
-#@api.route('/hello/<string:name>')  # url pattern으로 name 설정
-#class Hello(Resource):
-#    def get(self, name):  # 멤버 함수의 파라미터로 name 설정
-#        return {"message" : "Welcome, %s!" % name}
+  print(df2)
 
-#@api.route('/todos')
-#class TodoPost(Resource):
-#    def post(self):
-#        global count
-#        global todos
-#
-#        idx = count
-#        count += 1
-#        todos[idx] = request.json.get('data')
-#
-#        return {
-#            'todo_id': idx,
-#            'data': todos[idx]
-#        }
+  for idx, (createTime, current) in enumerate(zip(df2['createTime'], df2['current'])):
+      condition3 = df2.createTime == after_one_hour(createTime)
+      df3 = df2.loc[condition3]
+      if df3.shape[0] != 0:
+        df2.at[idx, 'test'] = df3.iloc[0]['current']
 
-#@api.route('/todos')
-#class TodoGet(Resource):
-#    def get(self):
-#
-#        return todos
+  print(df2.dropna(axis=0))
 
-#@api.route('/todos/<int:todo_id>')
-#class TodoSimple(Resource):
-#    def get(self, todo_id):
-#        return {
-#            'todo_id': todo_id,
-#            'data': todos[todo_id]
-#        }
-#
-#    def put(self, todo_id):
-#        todos[todo_id] = request.json.get('data')
-#        return {
-#            'todo_id': todo_id,
-#            'data': todos[todo_id]
-#        }
-#
-#    def delete(self, todo_id):
-#        del todos[todo_id]
-#        return {
-#            "delete" : "success"
-#        }
+db_connection = create_engine('mysql+pymysql://inpiniti:!Wjd53850@mysql-5.mysql.database.azure.com:3306/mysql')
+conn = db_connection.connect()
+db_test = pd.read_sql(text("""
+SELECT *
+  FROM inpiniti.investing20220510;
+"""), conn)
+df = pd.DataFrame(db_test)
 
-# Run the Flask server
-#if(__name__=='__main__'):
-#    app.run(host='0.0.0.0', port=5000)
+# 유일값
+for stock in df['stock'].unique():
+  stock_after_one_hour(stock)
+
+#conn=pymysql.connect(host='mysql-5.mysql.database.azure.com',port=3306,user='inpiniti',password='!Wjd53850',db='mysql')
+#sql="SELECT * FROM inpiniti.investing LIMIT 0,10"
+
+#df = pd.read_sql(sql,conn)
+
+# 데이터가 너무 많아, 데이터를 나누기 위한 sql
+# create table if not exists investing20220509
+# select *
+#   from inpiniti.investing
+# where createTime like '2022-05-09%';
+#  
+# delete from inpiniti.investing
+#  where createTime like '2022-05-09%';
