@@ -1,6 +1,18 @@
-import model # Import the python file containing the ML model
+import model3 # Import the python file containing the ML model
 from flask import Flask, request, render_template,jsonify # Import flask libraries
 from flask_restx import Resource, Api # Api 구현을 위한 Api 객체 import
+from imageio import imsave, imread, imwrite
+#from skimage.transform import resize
+import numpy as np
+import keras.models
+import re
+import base64
+import sys
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+import cv2
+sys.path.append(os.path.abspath("./models"))
+from load import *
 
 # Initialize the flask class and specify the templates directory
 app = Flask(__name__,template_folder="templates")
@@ -8,6 +20,9 @@ api = Api(app)  # Flask 객체에 Api 객체 등록
 
 todos = {}
 count = 1
+
+global model, graph
+model, graph = init()
 
 # Default route set as 'home'
 @app.route('/home')
@@ -24,7 +39,7 @@ def classify_type():
         petal_wid = request.args.get('pwid') # Get parameters for petal width
 
         # Get the output from the classification model
-        variety = model.classify(sepal_len, sepal_wid, petal_len, petal_wid)
+        variety = model3.classify(sepal_len, sepal_wid, petal_len, petal_wid)
 
         # Render the output in new HTML page
         return render_template('output.html', variety=variety)
@@ -82,6 +97,36 @@ class TodoSimple(Resource):
         return {
             "delete" : "success"
         }
+
+@app.route('/mnist')
+def index():
+    return render_template("index.html")
+
+@app.route('/predict/', methods=['GET','POST'])
+def predict():
+    # get data from drawing canvas and save as image
+    parseImage(request.get_data())
+
+    # read parsed image back in 8-bit, black and white mode (L)
+    x = cv2.imread('output.png', cv2.IMREAD_GRAYSCALE)
+    x = np.invert(x)
+    x = cv2.resize(x,(28,28))
+
+    # reshape image data for use in neural network
+    x = x.reshape(1,28,28,1)
+    with graph.as_default():
+        model.call = tf.function(model.call)
+        out = model.predict(x)
+        print(out)
+        print(np.argmax(out, axis=1))
+        response = np.array_str(np.argmax(out, axis=1))
+        return response
+
+def parseImage(imgData):
+    # parse canvas bytes and save as output.png
+    imgstr = re.search(b'base64,(.*)', imgData).group(1)
+    with open('output.png','wb') as output:
+        output.write(base64.decodebytes(imgstr))
 
 # Run the Flask server
 if(__name__=='__main__'):
