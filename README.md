@@ -23,3 +23,7 @@ AI Study 하면서 만든 코드 입니다.
         |GET|[/todos/:todo_id](http://20.214.141.2:5000/todos/:todo_id)|
         |DEL|[/todos/:todo_id](http://20.214.141.2:5000/todos/:todo_id)|
         |PUT|[/todos/:todo_id](http://20.214.141.2:5000/todos/:todo_id)|
+
+    - 숫자 예측
+    
+        [/mnist](http://20.214.141.2:5000/mnist)
