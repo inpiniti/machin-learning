@@ -1,6 +1,8 @@
 import model3 # Import the python file containing the ML model
 from flask import Flask, request, render_template,jsonify # Import flask libraries
 from flask_restx import Resource, Api # Api 구현을 위한 Api 객체 import
+from flask_cors import CORS
+
 from imageio import imsave, imread, imwrite
 #from skimage.transform import resize
 import numpy as np
@@ -14,8 +16,16 @@ import cv2
 sys.path.append(os.path.abspath("./models"))
 from load import *
 
+import time
+from apscheduler.schedulers.background import BackgroundScheduler
+
+import blank_test
+
 # Initialize the flask class and specify the templates directory
 app = Flask(__name__,template_folder="templates")
+
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+CORS(app)
 api = Api(app)  # Flask 객체에 Api 객체 등록
 
 todos = {}
@@ -144,6 +154,36 @@ def predict():
         print(np.argmax(out, axis=1))
         response = np.array_str(np.argmax(out, axis=1))
         return response
+
+@api.route('/start')
+class start(Resource):
+    def get(self):
+        start()
+
+@api.route('/test2')
+class test2(Resource):
+    def get(self):
+        df = blank_test.getResult()
+        if df is None:
+            return {}
+        else :
+            return df.to_json(force_ascii=False, orient = 'records', indent=4)
+
+cron = BackgroundScheduler(daemon=True)
+cron.scheduled_job('cron', hour='9')
+def start():
+    blank_test.start()
+    return 'start'
+
+cron.start()
+
+@app.route('/test3')
+def test3():
+    df = blank_test.getResult()
+    if df is None:
+        return {}
+    else :
+        return df.to_html()
 
 def parseImage(imgData):
     # parse canvas bytes and save as output.png
