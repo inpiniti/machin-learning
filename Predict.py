@@ -180,6 +180,8 @@ class Predict:
 
         self.result = inpiniti_df.sort_values(by=['d'], ascending=False)
 
+
+        return self.result
         #return inpiniti_df.sort_values(by=['d'], ascending=False)
 
     def start2(self, arr):
