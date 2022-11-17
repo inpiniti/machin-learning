@@ -2,12 +2,18 @@ from tkinter.messagebox import NO
 import joblib
 import pandas as pd
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TZ'] = 'Asia/Seoul'
 import time
-
-import schedule
-
+#time.tzset()
 from sqlalchemy import create_engine, text
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
+
+def getKstTime():
+    datetime_utc = datetime.utcnow()
+    timezone_kst = timezone(timedelta(hours=9))
+    datetime_kst = datetime_utc.astimezone(timezone_kst)
+    return datetime_kst
 
 db_test = None
 
@@ -28,7 +34,7 @@ def db_conn():
   start = time.time()
 
   # db 연결
-  db_connection = create_engine('mysql+pymysql://inpiniti:!Wjd53850@localhost:3306/inpiniti')
+  db_connection = create_engine('mysql+pymysql://root:!Wjd53850@113.131.152.55:3306/inpiniti')
   conn = db_connection.connect()
 
   print(f'db conn success : {timedelta(seconds=round(time.time() - start))}');
@@ -104,7 +110,7 @@ def check_learned_file_exists_reversed(fn, df):
       fn(file_name, df)
     i += 1
 
-def table_select(table_name):
+def table_select(table_name, arr = []):
   print('\n==================== table_select() ======================')
   print(f'table {table_name} selecting...');
 
@@ -112,8 +118,16 @@ def table_select(table_name):
 
   start = time.time()
 
-  today = datetime.today().strftime('%Y%m%d')
+  today = getKstTime().strftime('%Y%m%d')
   #today = '20221014'
+
+  sql_add = ""
+
+  if len(arr) != 0:
+    str = '\",\"'
+    arr_str = str.join(arr)
+    arr_str = arr_str.replace(",", str)
+    sql_add = f'and stock in ("{arr_str}")'
 
   # sql 조회
   sql_cmd = f"""
@@ -126,14 +140,16 @@ def table_select(table_name):
             changePrice , 
             changeRate , 
             tradingVolume , 
-            cast(TIMEDIFF(DATE_FORMAT(now(), '%H:%i:%s'), tradeTime) as char(8)) tradeTime, 
+            substr(cast(TIMEDIFF(DATE_FORMAT(now(), '%H:%i:%s'), tradeTime) as char(9)), 1, 8) tradeTime,
             score , 
             stock 
           from inpiniti.investing{today}
           where createTime = ( select max(createTime) 
                                 from inpiniti.investing{today})
         ) a
-  where tradeTime < '00:20:00'"""
+  where tradeTime < '00:20:00'
+  #where stock like ("%삼%")
+  {sql_add}"""
   print(sql_cmd)
   db_test = pd.read_sql(sql=text(sql_cmd), con=conn)
 
@@ -184,8 +200,32 @@ def start():
     global result
     result = inpiniti_df.sort_values(by=['d'], ascending=False)
 
-    start()
     #return inpiniti_df.sort_values(by=['d'], ascending=False)
+
+def start2(arr):
+  # 테이블 종류
+    row_1 = select()
+
+    # 첫번째 테이블의 테이블 명
+    table_1 = row_1.iloc[0]['table_name']
+
+    # 테이블 가져 오기
+    inpiniti_df = table_select(table_1, arr)
+
+    print('==================== inpiniti_df ====================')
+    print(inpiniti_df)
+
+    inpiniti_df['a'] = (round(inpiniti_df['current']/inpiniti_df['high'], 2) * 100).astype(int)
+    inpiniti_df['b'] = (round(inpiniti_df['current']/inpiniti_df['low'], 2) * 100).astype(int)
+
+    print('\n==================== inpiniti_df["d"] aa ======================')
+    startdt = time.time()
+
+    inpiniti_df["d"] = inpiniti_df[['a', 'b', 'changeRate', 'score']].apply(aa, axis = 1)
+    print(f'table select success : {timedelta(seconds=round(time.time() - startdt))}');
+    print('==========================================\n')
+
+    return inpiniti_df.sort_values(by=['d'], ascending=False)
 
 # 예측 단축
 def aa(passenger):

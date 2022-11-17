@@ -8,13 +8,16 @@
 import numpy as np
 import pandas as pd
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TZ'] = 'Asia/Seoul'
 import time
-#import psycopg2.extras
+#time.tzset()
+import psycopg2
 #from sqlalchemy import create_engine
 
 import pymysql
 from sqlalchemy import create_engine, text
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 
 from sklearn.model_selection import cross_val_score
 
@@ -31,7 +34,8 @@ import joblib
 
 best_accuracy = 0 # 가장 좋은 알고리즘
 best_model = None # 가장 좋은 모델
-classifier_types = [ "Logistic Regression", "KNN", "Gaussian Naive Bayes", "Decision Tree", "Gradient Boost" ] # 알고리즘 리스트
+classifier_types = [ "KNN", "Gaussian Naive Bayes", "Decision Tree" ] # 알고리즘 리스트
+#classifier_types = [ "Logistic Regression", "KNN", "Gaussian Naive Bayes", "Decision Tree", "Gradient Boost" ] # 알고리즘 리스트
 date = None # 오늘 날짜
 db_connection = None # db 연결 엔진?
 conn = None # 실제 db 연결
@@ -40,6 +44,12 @@ X_train = None
 X_test = None
 y_train = None
 y_test = None
+
+def getKstTime():
+  datetime_utc = datetime.utcnow()
+  timezone_kst = timezone(timedelta(hours=9))
+  datetime_kst = datetime_utc.astimezone(timezone_kst)
+  return datetime_kst
 
 # 학습된 파일이 있는지 확인
 # def check_learned_file_exists(file_name):
@@ -102,17 +112,17 @@ def stock_after_one_hour(stock):
   return df4
 
 # 예측하기
-def replacement_verification(data, type = "Logistic Regression", replacement_verificationtype = 1):
+def replacement_verification(data, type = "Logistic Regression"):
   # 예측시 고려해야하는 데이터 a, b, changeRate
   # 그 외에 데이터는 제외 시킴
   columns = ["a", "b", "changeRate", "score"]
   df_x_data = data[columns]
 
-  if replacement_verificationtype == 1:
-    df_y_data = data['hourlater']
-  else : 
-    ycolumns = ["hourlater", "hourlater2"]
-    df_y_data = data[ycolumns]
+  #if replacement_verificationtype == 1:
+  df_y_data = data['hourlater']
+  #else : 
+  #  ycolumns = ["hourlater"]
+  #  df_y_data = data[ycolumns]
 
   try:
     # 데이터 분할하기
@@ -125,12 +135,12 @@ def replacement_verification(data, type = "Logistic Regression", replacement_ver
     print(f'\n==================== replacement_verification() ======================')
     print(f'predict : {date}')
     print(f'classifiers : {type}')
-    print(f"time : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"time : {getKstTime().strftime('%Y-%m-%d %H:%M:%S')}")
 
     start = time.time()
 
     classifiers = {
-        "Logistic Regression": LogisticRegression(random_state = 0, solver="lbfgs", max_iter = 10000),
+        "Logistic Regression": LogisticRegression(random_state=0, solver="lbfgs", max_iter=10000),
         "KNN": KNeighborsClassifier(n_neighbors = 5, metric = "minkowski", p = 2),
         "Gaussian Naive Bayes": GaussianNB(),
         "Decision Tree": DecisionTreeClassifier(criterion = "entropy", random_state = 0),
@@ -187,22 +197,22 @@ def predict(predicttype = 1):
 
 def db_conn():
   print('\n==================== db_conn() ======================')
-  print('db conn...');
+  print('db conn...')
 
   start = time.time()
 
   global db_connection, conn
 
   # db 연결
-  db_connection = create_engine('mysql+pymysql://inpiniti:!Wjd53850@localhost:3306/inpiniti')
+  db_connection = create_engine('mysql+pymysql://root:!Wjd53850@113.131.152.55:3306/inpiniti')
   conn = db_connection.connect()
 
-  print(f'db conn success : {timedelta(seconds=round(time.time() - start))}');
+  print(f'db conn success : {timedelta(seconds=round(time.time() - start))}')
   print('==========================================\n')
 
 def table_select():
   print('\n==================== table_select() ======================')
-  print(f'table investing{date} selecting...');
+  print(f'table investing{date} selecting...')
 
   start = time.time()
 
@@ -210,7 +220,7 @@ def table_select():
   sql_cmd = f"SELECT * FROM inpiniti.investing{date} where tradeTime like '%:%';"
   db_test = pd.read_sql(sql=text(sql_cmd), con=conn)
 
-  print(f'table select success : {timedelta(seconds=round(time.time() - start))}');
+  print(f'table select success : {timedelta(seconds=round(time.time() - start))}')
 
   print('==========================================\n')
   return db_test
@@ -256,28 +266,23 @@ def business_logic(business_logictype = 1):
     df2['a'] = (round(df2['current']/df2['high'], 2) * 100).astype(int)
     df2['b'] = (round(df2['current']/df2['low'], 2) * 100).astype(int)
 
+    # 2의 경우에는 얼마로 변할지를 예측함
     if business_logictype == 2:
       df2['hourlater'] = (round(df2['test']/df2['current'], 4) * 10000).astype(int) # 이게 예측해야 되는 값
 
     best_model = None
     best_accuracy = 0
 
-    if business_logictype == 1:
-      for classifier_type in classifier_types:
-        replacement_verification(df2, classifier_type)
+    for classifier_type in classifier_types:
+      replacement_verification(df2, classifier_type)
 
-      predict()
-    else:
-      for classifier_type in classifier_types:
-        replacement_verification(df2, classifier_type, 2)
-
-      predict(2)
+    predict(business_logictype)
 
 # 실제 테이블 종류 알아오기
 def select():
   db_conn()
   print('\n==================== select() ======================')
-  print('Views : tables selecting...');
+  print('Views : tables selecting...')
 
   start = time.time()
 
@@ -285,7 +290,7 @@ def select():
   sql_cmd = f'SELECT * FROM inpiniti.tables;'
   db_test = pd.read_sql(sql=sql_cmd, con=conn)
 
-  print(f'table select success : {timedelta(seconds=round(time.time() - start))}');
+  print(f'table select success : {timedelta(seconds=round(time.time() - start))}')
   print('==========================================\n')
 
   # pandas 생성
@@ -301,7 +306,6 @@ def iter_loop(rating, fn):
 
 def test():
   if not check_learned_file_exists(date):
-    business_logic()
     business_logic(2)
   else :
     print(f"'{date}' This day's learning has already been completed.")
@@ -315,6 +319,9 @@ def start_learning():
   # 테이블 종류
   tables_df = select()
 
+  print(tables_df)
+
+  # 테이블 종류만큼 반복
   for idx, row in tables_df.iterrows():
     iter_loop(row['table_name'], test)
 
