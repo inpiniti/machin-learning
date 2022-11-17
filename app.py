@@ -38,7 +38,7 @@ count = 1
 global model, graph
 #model, graph = init()
 
-allPredict = Predict.Predict()
+allPredictResult = None
 
 # Default route set as 'home'
 @app.route('/home')
@@ -168,9 +168,13 @@ class start(Resource):
 
 @api.route('/test2')
 class test2(Resource):
+    global allPredictResult
+
     def get(self):
         #df = blank_test.getResult()
-        df = allPredict.getResult()
+        #df = allPredict.getResult()
+        df = allPredictResult
+
         if df is None:
             return {}
         else :
@@ -181,14 +185,18 @@ cron = BackgroundScheduler(daemon=True)
 # 60초마다 실행
 @cron.scheduled_job('interval', seconds=60, id='test_1')
 def job1():
-    start = '09:00:00' < time.strftime("%H:%M:%S")
-    end = '15:30:00' > time.strftime("%H:%M:%S")
+    global allPredictResult
+
+    now = time.strftime("%H:%M:%S")
+    start = '09:00:00' < now
+    end = '15:30:00' > now
     if start & end:
-        print(f'ok {time.strftime("%H:%M:%S")}')
+        print(f'ok {now}')
         #blank_test.start()
-        allPredict.start()
+
+        allPredictResult = Predict.Predict().start()
     else:
-        print(f'not {time.strftime("%H:%M:%S")}')
+        print(f'not {now}')
 
 cron.start()
 
