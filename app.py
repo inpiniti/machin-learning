@@ -16,7 +16,7 @@ os.environ['TZ'] = 'Asia/Seoul'
 import cv2
 sys.path.append(os.path.abspath("./models"))
 
-import time
+from datetime import timedelta, datetime, timezone
 #time.tzset()
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -180,6 +180,12 @@ class test2(Resource):
         else :
             return df.to_json(force_ascii=False, orient = 'records', indent=4)
 
+def getKstTime():
+    datetime_utc = datetime.utcnow()
+    timezone_kst = timezone(timedelta(hours=9))
+    datetime_kst = datetime_utc.astimezone(timezone_kst)
+    return datetime_kst
+
 cron = BackgroundScheduler(daemon=True)
 
 # 60초마다 실행
@@ -187,13 +193,12 @@ cron = BackgroundScheduler(daemon=True)
 def job1():
     global allPredictResult
 
-    now = time.strftime("%H:%M:%S")
+    now = getKstTime().strftime('%H:%M:%S')
     start = '09:00:00' < now
     end = '15:30:00' > now
     if start & end:
         print(f'ok {now}')
         #blank_test.start()
-
         allPredictResult = Predict.Predict().start()
     else:
         print(f'not {now}')
