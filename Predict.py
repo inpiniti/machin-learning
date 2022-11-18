@@ -203,7 +203,7 @@ class Predict:
         print('\n==================== inpiniti_df["d"] aa ======================')
         startdt = time.time()
 
-        inpiniti_df["d"] = inpiniti_df[['a', 'b', 'changeRate', 'score']].apply(aa, axis = 1)
+        inpiniti_df["d"] = inpiniti_df[['a', 'b', 'changeRate', 'score']].apply(self.aa, axis = 1)
         print(f'table select success : {timedelta(seconds=round(time.time() - startdt))}');
         print('==========================================\n')
 

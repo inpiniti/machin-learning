@@ -161,11 +161,6 @@ def predict():
         response = np.array_str(np.argmax(out, axis=1))
         return response
 
-@api.route('/start')
-class start(Resource):
-    def get(self):
-        start()
-
 @api.route('/test2')
 class test2(Resource):
     global allPredictResult
@@ -184,7 +179,17 @@ def getKstTime():
     datetime_utc = datetime.utcnow()
     timezone_kst = timezone(timedelta(hours=9))
     datetime_kst = datetime_utc.astimezone(timezone_kst)
+
+    print("datetime_utc:", datetime_utc)
+    print("datetime_kst:", datetime_kst)
+
     return datetime_kst
+
+@api.route('/start')
+class IntervalStart(Resource):
+    def get(self):
+        job1()
+        return {}
 
 cron = BackgroundScheduler(daemon=True)
 
@@ -192,8 +197,7 @@ cron = BackgroundScheduler(daemon=True)
 @cron.scheduled_job('interval', seconds=60, id='test_1')
 def job1():
     global allPredictResult
-
-    now = getKstTime().strftime('%H:%M:%S')
+    now = datetime.today().strftime('%H:%M:%S')
     start = '09:00:00' < now
     end = '15:30:00' > now
     if start & end:
@@ -212,30 +216,6 @@ def test3():
         return {}
     else :
         return df.to_html()
-
-@api.route('/test4')
-class test4(Resource):
-    def get(self):
-        start = '09:00:00' > time.strftime("%H:%M:%S")
-        end = '15:30:00' < time.strftime("%H:%M:%S")
-        if start & end:
-            return {}
-        else:
-            print('test4.2')
-            data = request.args.get('data', type = str)
-            if data is None:
-                print('test4.3')
-                return {}
-            else:
-                print('test4.4')
-                arr = data.split("'")
-                df = blank_test.start2(arr)
-                if df is None:
-                    print('test4.5')
-                    return {}
-                else :
-                    print('test4.6')
-                    return df.to_json(force_ascii=False, orient = 'records', indent=4)
 
 # 학습된 파일 리스트
 @api.route('/learnedFiles')
