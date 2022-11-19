@@ -107,7 +107,6 @@ class Predict:
         if len(arr) != 0:
             str = '\",\"'
             arr_str = str.join(arr)
-            arr_str = arr_str.replace(",", str)
             sql_add = f'and stock in ("{arr_str}")'
 
         # sql 조회
@@ -124,9 +123,9 @@ class Predict:
                     substr(cast(TIMEDIFF(DATE_FORMAT(now(), '%H:%i:%s'), tradeTime) as char(9)), 1, 8) tradeTime,
                     score , 
                     stock 
-                from inpiniti.investing{today}
+                from inpiniti.{table_name}
                 where createTime = ( select max(createTime) 
-                                        from inpiniti.investing{today})
+                                        from inpiniti.{table_name})
                 ) a
         where tradeTime < '00:20:00'
         #where stock like ("%삼%")
@@ -249,6 +248,7 @@ class Predict:
 
         #print(f'{round(true_cnt/all_cnt*100)}% - {true_cnt}/{all_cnt}')
 
+        # 5개 정도의 모듈만
         return f'{round(self.true_cnt/5*100)}'
 
     def getResult(self):
