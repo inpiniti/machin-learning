@@ -40,6 +40,9 @@ global model, graph
 #model, graph = init()
 
 allPredictResult = None
+stockPredictResult = None
+discussionPredictResult = None
+newsPredictResult = None
 
 # Default route set as 'home'
 @app.route('/home')
@@ -195,23 +198,20 @@ class IntervalStart(Resource):
 @api.route('/naver/popular')
 class Popular(Resource):
     def get(self):
-        return Predict.Predict()\
-            .start2(naver.stock())\
-            .to_json(force_ascii=False, orient = 'records', indent=4)
+        global stockPredictResult
+        return stockPredictResult
 
 @api.route('/naver/discussion')
 class Discussion(Resource):
     def get(self):
-        return Predict.Predict() \
-            .start2(naver.discussion()) \
-            .to_json(force_ascii=False, orient = 'records', indent=4)
+        global discussionPredictResult
+        return discussionPredictResult
 
 @api.route('/naver/news')
 class News(Resource):
     def get(self):
-        return Predict.Predict() \
-            .start2(naver.news()) \
-            .to_json(force_ascii=False, orient = 'records', indent=4)
+        global newsPredictResult
+        return newsPredictResult
 
 cron = BackgroundScheduler(daemon=True)
 
@@ -228,6 +228,25 @@ def job1():
         allPredictResult = Predict.Predict().start()
     else:
         print(f'not {now}')
+
+# 5분마다 실행
+@cron.scheduled_job('interval', seconds=300, id='test_2')
+def job2():
+    global stockPredictResult
+    global discussionPredictResult
+    global newsPredictResult
+
+    stockPredictResult = Predict.Predict() \
+        .start2(naver.stock()) \
+        .to_json(force_ascii=False, orient = 'records', indent=4)
+
+    discussionPredictResult = Predict.Predict() \
+        .start2(naver.discussion()) \
+        .to_json(force_ascii=False, orient = 'records', indent=4)
+
+    newsPredictResult = Predict.Predict() \
+        .start2(naver.news()) \
+        .to_json(force_ascii=False, orient = 'records', indent=4)
 
 cron.start()
 
