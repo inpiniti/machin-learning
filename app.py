@@ -213,6 +213,11 @@ class News(Resource):
         global newsPredictResult
         return newsPredictResult
 
+@api.route('/interesting')
+class Interesting(Resource):
+    def get(self):
+        return Predict.Predict().start2(request.json["data"]).to_json(force_ascii=False, orient = 'records', indent=4)
+
 cron = BackgroundScheduler(daemon=True)
 
 # 60초마다 실행
