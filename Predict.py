@@ -103,11 +103,13 @@ class Predict:
         #today = '20221014'
 
         sql_add = ""
+        sql_add2 = ""
 
         if len(arr) != 0:
             str = '\",\"'
             arr_str = str.join(arr)
             sql_add = f'and stock in ("{arr_str}")'
+            sql_add2 = "#"
 
         # sql 조회
         sql_cmd = f"""
@@ -127,7 +129,8 @@ class Predict:
                 where createTime = ( select max(createTime) 
                                         from inpiniti.{table_name})
                 ) a
-        where tradeTime < '00:20:00'
+        where 1=1
+        {sql_add2}and tradeTime < '00:20:00'
         #where stock like ("%삼%")
         {sql_add}"""
         print(sql_cmd)

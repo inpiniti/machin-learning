@@ -192,7 +192,7 @@ def getKstTime():
 @api.route('/start')
 class IntervalStart(Resource):
     def get(self):
-        job1()
+        job2()
         return {}
 
 @api.route('/naver/popular')
