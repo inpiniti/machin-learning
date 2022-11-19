@@ -24,6 +24,7 @@ import blank_test
 import manager
 
 import Predict
+import api.naver as naver
 
 # Initialize the flask class and specify the templates directory
 app = Flask(__name__,template_folder="templates")
@@ -190,6 +191,27 @@ class IntervalStart(Resource):
     def get(self):
         job1()
         return {}
+
+@api.route('/naver/popular')
+class Popular(Resource):
+    def get(self):
+        return Predict.Predict()\
+            .start2(naver.stock())\
+            .to_json(force_ascii=False, orient = 'records', indent=4)
+
+@api.route('/naver/discussion')
+class Discussion(Resource):
+    def get(self):
+        return Predict.Predict() \
+            .start2(naver.discussion()) \
+            .to_json(force_ascii=False, orient = 'records', indent=4)
+
+@api.route('/naver/news')
+class News(Resource):
+    def get(self):
+        return Predict.Predict() \
+            .start2(naver.news()) \
+            .to_json(force_ascii=False, orient = 'records', indent=4)
 
 cron = BackgroundScheduler(daemon=True)
 
