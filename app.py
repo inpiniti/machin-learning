@@ -216,7 +216,11 @@ class News(Resource):
 @api.route('/interesting')
 class Interesting(Resource):
     def post(self):
-        return Predict.Predict().start2(request.json["data"]).to_json(force_ascii=False, orient = 'records', indent=4)
+
+        if len(request.json["data"]) != 0:
+            return Predict.Predict().start2(request.json["data"]).to_json(force_ascii=False, orient = 'records', indent=4)
+        else:
+            return []
 
 cron = BackgroundScheduler(daemon=True)
 
