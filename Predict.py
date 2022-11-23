@@ -130,7 +130,7 @@ class Predict:
                                         from inpiniti.{table_name})
                 ) a
         where 1=1
-        {sql_add2}and tradeTime < '00:20:00'
+        #{sql_add2}and tradeTime < '00:20:00'
         #where stock like ("%삼%")
         {sql_add}"""
         print(sql_cmd)
