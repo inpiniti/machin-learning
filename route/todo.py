@@ -4,7 +4,7 @@ from flask_restx import Resource, Namespace
 todos = {}
 count = 1
 
-Todo = Namespace('Todo')
+Todo = Namespace('todo')
 
 @Todo.route('/')
 class TodoPost(Resource):
