@@ -52,7 +52,6 @@ class Predict:
             self.true_cnt += 1
         else :
             self.false_cnt += 1
-        #print('==========================================\n')
 
     # 파일 반복
     def check_learned_file_exists(self, fn, df):
@@ -80,12 +79,7 @@ class Predict:
             i += 1
 
     def table_select(self, table_name, arr = []):
-        print('\n==================== table_select() ======================')
         print(f'table {table_name} selecting...');
-
-        start = time.time()
-        today = datetime.today().strftime('%Y%m%d')
-        #today = '20221014'
 
         sql_add = ""
         sql_add2 = ""
@@ -118,12 +112,9 @@ class Predict:
         #{sql_add2}and tradeTime < '00:20:00'
         #where stock like ("%삼%")
         {sql_add}"""
-        print(sql_cmd)
+        #print(sql_cmd)
         db_test = pd.read_sql(sql=text(sql_cmd), con=self.conn)
 
-        print(f'table select success : {timedelta(seconds=round(time.time() - start))}');
-
-        print('==========================================\n')
         return db_test
 
     def start(self):
@@ -139,34 +130,14 @@ class Predict:
         inpiniti_df['a'] = (round(inpiniti_df['current']/inpiniti_df['high'], 2) * 100).astype(int)
         inpiniti_df['b'] = (round(inpiniti_df['current']/inpiniti_df['low'], 2) * 100).astype(int)
 
-        ##columns = ["a", "b", "changeRate", "score"]
-        #print('\n==================== inpiniti_df["c"] bb ======================')
-        #startdt = time.time()
-        #inpiniti_df["c"] = inpiniti_df[['a', 'b', 'changeRate', 'score']].apply(bb, axis = 1)
-        #print(f'table select success : {timedelta(seconds=round(time.time() - startdt))}');
-        #print('==========================================\n')
-        #print(inpiniti_df['c'].sort_values(ascending=False))
-
-        #print(inpiniti_df.sort_values(by=['c'], ascending=False))
-
-        #is_100 = inpiniti_df['c'] == '100%'
-        #is_80 = inpiniti_df['c'] == '80%'
-        #predict10 = inpiniti_df[is_100 | is_80]
-
-        #print(predict10)
-
-        print('\n==================== inpiniti_df["d"] aa ======================')
         startdt = time.time()
 
         inpiniti_df["d"] = inpiniti_df[['a', 'b', 'changeRate', 'score']].apply(self.aa, axis = 1)
-        print(f'table select success : {timedelta(seconds=round(time.time() - startdt))}');
-        print('==========================================\n')
+        print(f'all stock predict time : {timedelta(seconds=round(time.time() - startdt))}');
 
         self.result = inpiniti_df.sort_values(by=['d'], ascending=False)
 
-
         return self.result
-        #return inpiniti_df.sort_values(by=['d'], ascending=False)
 
     def start2(self, arr):
         # 테이블 종류
@@ -181,12 +152,10 @@ class Predict:
         inpiniti_df['a'] = (round(inpiniti_df['current']/inpiniti_df['high'], 2) * 100).astype(int)
         inpiniti_df['b'] = (round(inpiniti_df['current']/inpiniti_df['low'], 2) * 100).astype(int)
 
-        print('\n==================== inpiniti_df["d"] aa ======================')
         startdt = time.time()
 
         inpiniti_df["d"] = inpiniti_df[['a', 'b', 'changeRate', 'score']].apply(self.aa, axis = 1)
-        print(f'table select success : {timedelta(seconds=round(time.time() - startdt))}');
-        print('==========================================\n')
+        print(f'start2 time : {timedelta(seconds=round(time.time() - startdt))}');
 
         return inpiniti_df.sort_values(by=['d'], ascending=False)
 

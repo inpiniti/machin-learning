@@ -4,17 +4,16 @@ import api.naver as naver
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 
-cron = BackgroundScheduler(daemon=True)
+cron = BackgroundScheduler(daemon=True, job_defaults={'max_instances': 2})
 
 # 60초마다 실행
-@cron.scheduled_job('interval', seconds=60, id='test_1')
+@cron.scheduled_job('interval', seconds=300, id='test_1')
 def job1():
     now = datetime.today().strftime('%H:%M:%S')
     start = '09:00:00' < now
     end = '15:30:00' > now
     if start & end:
         print(f'ok {now}')
-        #blank_test.start()
         config.allPredictResult = Predict.Predict().start()
     else:
         print(f'not {now}')
