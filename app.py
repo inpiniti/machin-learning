@@ -5,38 +5,37 @@ from route.todo import Todo
 from route.flower import Flower
 from route.naver import Naver
 from route.crontab import cron
-
 from flask_cors import CORS
 
 import sys
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ['TZ'] = 'Asia/Seoul'
-
-sys.path.append(os.path.abspath("./models"))
-
-from datetime import timedelta, datetime, timezone
-#time.tzset()
-
 import blank_test
 import manager
-
 import Predict
 import config
 
+# 타임존 설정
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TZ'] = 'Asia/Seoul'
+sys.path.append(os.path.abspath("./models"))
+
 # Initialize the flask class and specify the templates directory
 app = Flask(__name__,template_folder="templates")
-
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 CORS(app)
-api = Api(app)  # Flask 객체에 Api 객체 등록
 
+# Flask 객체에 Api 객체 등록
+api = Api(app)
+
+# api 라우터 연결
 api.add_namespace(Hello, '/hello')
 api.add_namespace(Todo, '/todos')
 api.add_namespace(Naver, '/naver')
 
+# html 라우터 연결
 app.register_blueprint(Flower)
 
+# 배치 시작
 cron.start()
 
 #model, graph = init()
@@ -53,26 +52,9 @@ class test2(Resource):
         else :
             return df.to_json(force_ascii=False, orient = 'records', indent=4)
 
-def getKstTime():
-    datetime_utc = datetime.utcnow()
-    timezone_kst = timezone(timedelta(hours=9))
-    datetime_kst = datetime_utc.astimezone(timezone_kst)
-
-    print("datetime_utc:", datetime_utc)
-    print("datetime_kst:", datetime_kst)
-
-    return datetime_kst
-
-@api.route('/start')
-class IntervalStart(Resource):
-    def get(self):
-        job2()
-        return {}
-
 @api.route('/interesting')
 class Interesting(Resource):
     def post(self):
-
         if len(request.json["data"]) != 0:
             return Predict.Predict().start2(request.json["data"]).to_json(force_ascii=False, orient = 'records', indent=4)
         else:
