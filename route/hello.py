@@ -1,12 +1,7 @@
 from flask import request, render_template, Blueprint
 from flask_restx import Resource, Namespace
 
-Home = Blueprint("home", __name__, url_prefix="/home")
 Hello = Namespace('hello')
-
-@Home.route('')
-def HomePage():
-    return render_template('home.html') # Render home.html
 
 @Hello.route('/hello')  # 데코레이터 이용, '/hello' 경로에 클래스 등록
 class HelloWorld(Resource):
