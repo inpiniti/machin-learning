@@ -18,34 +18,19 @@ class Predict:
 
     # db 연결
     def db_conn(self):
-        print('\n==================== db_conn() ======================')
-        print('db conn...');
-
-        start = time.time()
-
         # db 연결
         db_connection = create_engine('mysql+pymysql://root:!Wjd53850@113.131.152.55:3306/inpiniti')
         conn = db_connection.connect()
-
-        print(f'db conn success : {timedelta(seconds=round(time.time() - start))}');
-        print('==========================================\n')
 
         return conn
 
     # 실제 테이블 종류 알아오기
     def select(self):
         self.conn = self.db_conn()
-        print('\n==================== select() ======================')
-        print('Views : tables selecting...');
-
-        start = time.time()
 
         # sql 조회
         sql_cmd = f'SELECT MAX(table_name) table_name FROM inpiniti.tables;'
         db_test = pd.read_sql(sql=sql_cmd, con=self.conn)
-
-        print(f'table select success : {timedelta(seconds=round(time.time() - start))}');
-        print('==========================================\n')
 
         # pandas 생성
         df = pd.DataFrame(db_test)
@@ -151,9 +136,6 @@ class Predict:
         # 테이블 가져 오기
         inpiniti_df = self.table_select(table_1)
 
-        print('==================== inpiniti_df ====================')
-        print(inpiniti_df)
-
         inpiniti_df['a'] = (round(inpiniti_df['current']/inpiniti_df['high'], 2) * 100).astype(int)
         inpiniti_df['b'] = (round(inpiniti_df['current']/inpiniti_df['low'], 2) * 100).astype(int)
 
@@ -195,9 +177,6 @@ class Predict:
 
         # 테이블 가져 오기
         inpiniti_df = self.table_select(table_1, arr)
-
-        print('==================== inpiniti_df ====================')
-        print(inpiniti_df)
 
         inpiniti_df['a'] = (round(inpiniti_df['current']/inpiniti_df['high'], 2) * 100).astype(int)
         inpiniti_df['b'] = (round(inpiniti_df['current']/inpiniti_df['low'], 2) * 100).astype(int)
