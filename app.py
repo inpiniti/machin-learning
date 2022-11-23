@@ -4,6 +4,7 @@ from route.hello import Hello
 from route.todo import Todo
 from route.flower import Flower
 from route.naver import Naver
+from route.crontab import cron
 
 from flask_cors import CORS
 
@@ -16,14 +17,11 @@ sys.path.append(os.path.abspath("./models"))
 
 from datetime import timedelta, datetime, timezone
 #time.tzset()
-from apscheduler.schedulers.background import BackgroundScheduler
 
 import blank_test
 import manager
 
 import Predict
-import api.naver as naver
-
 import config
 
 # Initialize the flask class and specify the templates directory
@@ -38,6 +36,8 @@ api.add_namespace(Todo, '/todos')
 api.add_namespace(Naver, '/naver')
 
 app.register_blueprint(Flower)
+
+cron.start()
 
 #model, graph = init()
 
@@ -77,38 +77,6 @@ class Interesting(Resource):
             return Predict.Predict().start2(request.json["data"]).to_json(force_ascii=False, orient = 'records', indent=4)
         else:
             return []
-
-cron = BackgroundScheduler(daemon=True)
-
-# 60초마다 실행
-@cron.scheduled_job('interval', seconds=60, id='test_1')
-def job1():
-    now = datetime.today().strftime('%H:%M:%S')
-    start = '09:00:00' < now
-    end = '15:30:00' > now
-    if start & end:
-        print(f'ok {now}')
-        #blank_test.start()
-        config.allPredictResult = Predict.Predict().start()
-    else:
-        print(f'not {now}')
-
-# 5분마다 실행
-@cron.scheduled_job('interval', seconds=300, id='test_2')
-def job2():
-    config.stockPredictResult = Predict.Predict() \
-        .start2(naver.stock()) \
-        .to_json(force_ascii=False, orient = 'records', indent=4)
-
-    config.discussionPredictResult = Predict.Predict() \
-        .start2(naver.discussion()) \
-        .to_json(force_ascii=False, orient = 'records', indent=4)
-
-    config.newsPredictResult = Predict.Predict() \
-        .start2(naver.news()) \
-        .to_json(force_ascii=False, orient = 'records', indent=4)
-
-cron.start()
 
 @app.route('/test3')
 def test3():
