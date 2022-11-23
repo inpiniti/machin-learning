@@ -9,14 +9,19 @@ cron = BackgroundScheduler(daemon=True, job_defaults={'max_instances': 2})
 # 60초마다 실행
 @cron.scheduled_job('interval', seconds=300, id='test_1')
 def job1():
-    now = datetime.today().strftime('%H:%M:%S')
-    start = '09:00:00' < now
-    end = '15:30:00' > now
-    if start & end:
-        print(f'ok {now}')
-        config.allPredictResult = Predict.Predict().start()
+    # 시간 제한
+    if config.allPredictResult:
+        now = datetime.today().strftime('%H:%M:%S')
+        start = '09:00:00' < now
+        end = '15:30:00' > now
+        if start & end:
+            print(f'ok {now}')
+            config.allPredictResult = Predict.Predict().start()
+        else:
+            print(f'not {now}')
+    # allPredictResult 비어있는 경우 무조건 돌림
     else:
-        print(f'not {now}')
+        config.allPredictResult = Predict.Predict().start()
 
 # 60초마다 실행
 @cron.scheduled_job('interval', seconds=60, id='test_2')
