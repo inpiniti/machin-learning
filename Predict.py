@@ -19,7 +19,7 @@ class Predict:
     # db 연결
     def db_conn(self):
         # db 연결
-        db_connection = create_engine('mysql+pymysql://root:!Wjd53850@113.131.152.55:3306/inpiniti')
+        db_connection = create_engine('mysql+pymysql://root:!Wjd53850@113.131.145.133:3306/inpiniti')
         conn = db_connection.connect()
 
         return conn
