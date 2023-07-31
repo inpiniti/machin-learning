@@ -4,6 +4,11 @@ from flask_restx import Resource, Namespace
 import requests
 
 Daum = Namespace('daum', description='daum 증권사이트의 데이터를 조회합니다.')
+daum_host = 'https://finance.daum.net'
+headers = {
+    'Referer': 'https://finance.daum.net/domestic/sectors',
+    'User-Agent': 'PostmanRuntime/7.32.3'
+}
 
 @Daum.route('crawlingIndustries/<string:market>')
 @Daum.doc(params={'market': 'KOSPI 또는 KOSDAQ 을 입력해주세요.'})
@@ -22,13 +27,8 @@ class crawlingIndustries(Resource):
         includeStocks = 'true'
         pagination = 'true'
 
-        daum_host = 'https://finance.daum.net'
         daum_url = '/api/sectors/'
         
-        headers = {
-            'Referer': 'https://finance.daum.net/domestic/sectors',
-            'User-Agent': 'PostmanRuntime/7.32.3'
-        }
         query_params = {
             'includedStockLimit' : includedStockLimit,
             'page' : page,
@@ -70,3 +70,39 @@ class crawlingIndustries(Resource):
             })
         
         return list
+
+@Daum.route('crawlingStocks/<string:symbolCode>')
+@Daum.doc(params={'symbolCode': '업종코드를 입력해주세요. ex) KRD020020149'})
+class crawlingStocks(Resource):
+    def get(self, symbolCode):
+        """업종코드를 기반으로 종목을 조회합니다."""
+
+        # Query Params
+        page = '1'
+        perPage = '30'
+        fieldName = 'changeRate'
+        order = 'desc'
+        pagination = 'true'
+
+        daum_url = '/api/sectors/' + symbolCode + '/includedStocks'
+
+        query_params = {
+            'symbolCode' : symbolCode,
+            'page' : page,
+            'perPage' : perPage,
+            'fieldName' : fieldName,
+            'order' : order,
+            'pagination' : pagination
+        }
+
+        url = (
+            daum_host + 
+            daum_url
+        )
+
+        response = requests.get(
+            url, 
+            json=query_params, 
+            headers=headers)
+        
+        return response.json()
