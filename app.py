@@ -45,7 +45,7 @@ api.add_namespace(Holiday, '/holiday')
 app.register_blueprint(Flower)
 
 # 배치 시작
-#cron.start()
+cron.start()
 
 # Run the Flask server
 if(__name__=='__main__'):

@@ -12,10 +12,6 @@ import time
 import pandas as pd
 
 Base = declarative_base()
-db_info = f"mysql+pymysql://{pysql['id']}:{pysql['pw']}@{pysql['host']}:{pysql['port']}/{pysql['db']}"
-engine = create_engine(db_info)
-conn = engine.connect()
-
 class history(Base):
     __tablename__ = "history"
     
@@ -23,6 +19,10 @@ class history(Base):
     host = Column(Text)
     url_path = Column(Text)
     result = Column(Text)
+
+db_info = f"mysql+pymysql://{pysql['id']}:{pysql['pw']}@{pysql['host']}:{pysql['port']}/{pysql['db']}"
+engine = create_engine(db_info)
+engine = engine.connect()
 
 # 실제 테이블 종류 알아오기
 def select(_sql_cmd):
@@ -36,7 +36,9 @@ def select(_sql_cmd):
     #db_test = pd.read_sql(sql=_sql_cmd, con=_conn)
 
     Session = sessionmaker()
-    Session.configure(bind=conn)
+    Session.configure(bind=engine)
+
+    print(engine)
 
     session = Session()
     session.add(_sql_cmd)

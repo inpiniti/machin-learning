@@ -18,7 +18,7 @@ headers = {
 # 오늘이 공휴일인지 확인
 @Holiday.route('/isHoliday')
 class isHoliday(Resource):
-    def get(self):
+    def get():
         """오늘이 공휴일인지 확인"""
         if datetime.today().weekday() >= 5: # 5(토요일), 6(일요일)
             return {
@@ -52,7 +52,7 @@ class isHoliday(Resource):
                 for item in items:
                     if str(item['locdate']) == today:
                         result = 'true';
-
+            
             select(history(host=pysql["host"], url_path="/isHoliday", result=result))
 
             return {
