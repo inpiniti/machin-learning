@@ -10,6 +10,7 @@ from route.learning import Learning
 from route.stock import Stock
 from route.crontab import cron
 from route.daum import Daum
+from route.investing import Investing
 
 import sys
 import os
@@ -34,6 +35,7 @@ api.add_namespace(Naver, '/naver')
 api.add_namespace(Stock, '/stock')
 api.add_namespace(Learning, '/learning')
 api.add_namespace(Daum, '/daum')
+api.add_namespace(Investing, '/investing')
 
 # html 라우터 연결
 app.register_blueprint(Flower)
