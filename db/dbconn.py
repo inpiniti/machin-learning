@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from datetime import timedelta
-from config import pysql
+from config import pysql, engine
 
 import time
 #time.tzset()
@@ -12,6 +12,10 @@ import time
 import pandas as pd
 
 Base = declarative_base()
+db_info = f"mysql+pymysql://{pysql['id']}:{pysql['pw']}@{pysql['host']}:{pysql['port']}/{pysql['db']}"
+engine = create_engine(db_info)
+conn = engine.connect()
+
 class history(Base):
     __tablename__ = "history"
     
@@ -20,26 +24,8 @@ class history(Base):
     url_path = Column(Text)
     result = Column(Text)
 
-# db 연결
-def db_conn():
-    print('\n==================== db_conn() ======================')
-    print('db conn...');
-
-    start = time.time()
-
-    db_info = f"mysql+pymysql://{pysql['id']}:{pysql['pw']}@{pysql['host']}:{pysql['port']}/{pysql['db']}"
-
-    # db 연결
-    db_connection = create_engine(db_info)
-    _conn = db_connection.connect()
-
-    print(f'db conn success : {timedelta(seconds=round(time.time() - start))}');
-    print('==========================================\n')
-
-    return _conn
-
 # 실제 테이블 종류 알아오기
-def select(_conn, _sql_cmd):
+def select(_sql_cmd):
     print('\n==================== select() ======================')
     print('Views : tables selecting...');
 
@@ -50,7 +36,7 @@ def select(_conn, _sql_cmd):
     #db_test = pd.read_sql(sql=_sql_cmd, con=_conn)
 
     Session = sessionmaker()
-    Session.configure(bind=_conn)
+    Session.configure(bind=conn)
 
     session = Session()
     session.add(_sql_cmd)

@@ -3,7 +3,7 @@ from flask_restx import Resource, Namespace
 from datetime import datetime
 from config import pysql
 
-from db.dbconn import db_conn, select, history
+from db.dbconn import select, history
 
 import requests
 
@@ -20,8 +20,6 @@ headers = {
 class isHoliday(Resource):
     def get(self):
         """오늘이 공휴일인지 확인"""
-        _conn = db_conn()
-
         if datetime.today().weekday() >= 5: # 5(토요일), 6(일요일)
             return {
                 'holiday' : 'true'
@@ -55,7 +53,7 @@ class isHoliday(Resource):
                     if str(item['locdate']) == today:
                         result = 'true';
 
-            select(_conn, history(host=pysql["host"], url_path="/isHoliday", result=result))
+            select(history(host=pysql["host"], url_path="/isHoliday", result=result))
 
             return {
                 'holiday' : result
