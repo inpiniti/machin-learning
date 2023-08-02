@@ -1,10 +1,24 @@
 from sqlalchemy import create_engine
+from sqlalchemy import Column, Integer, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
 from datetime import timedelta
+from config import pysql
 
 import time
 #time.tzset()
 
 import pandas as pd
+
+Base = declarative_base()
+class history(Base):
+    __tablename__ = "history"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    host = Column(Text)
+    url_path = Column(Text)
+    result = Column(Text)
 
 # db 연결
 def db_conn():
@@ -13,17 +27,19 @@ def db_conn():
 
     start = time.time()
 
+    db_info = f"mysql+pymysql://{pysql['id']}:{pysql['pw']}@{pysql['host']}:{pysql['port']}/{pysql['db']}"
+
     # db 연결
-    db_connection = create_engine('mysql+pymysql://root:!Wjd53850@113.131.145.133:3306/inpiniti')
-    conn = db_connection.connect()
+    db_connection = create_engine(db_info)
+    _conn = db_connection.connect()
 
     print(f'db conn success : {timedelta(seconds=round(time.time() - start))}');
     print('==========================================\n')
 
-    return conn
+    return _conn
 
 # 실제 테이블 종류 알아오기
-def select(conn, sql_cmd):
+def select(_conn, _sql_cmd):
     print('\n==================== select() ======================')
     print('Views : tables selecting...');
 
@@ -31,12 +47,21 @@ def select(conn, sql_cmd):
 
     # sql 조회
     #sql_cmd = f'SELECT MAX(table_name) table_name FROM inpiniti.tables;'
-    db_test = pd.read_sql(sql=sql_cmd, con=conn)
+    #db_test = pd.read_sql(sql=_sql_cmd, con=_conn)
+
+    Session = sessionmaker()
+    Session.configure(bind=_conn)
+
+    session = Session()
+    session.add(_sql_cmd)
+    session.commit()
+    session.close()
+
 
     print(f'table select success : {timedelta(seconds=round(time.time() - start))}');
     print('==========================================\n')
 
     # pandas 생성
-    df = pd.DataFrame(db_test)
+    #df = pd.DataFrame(db_test)
 
-    return df
+    #return df
