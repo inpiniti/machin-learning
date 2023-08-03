@@ -24,9 +24,9 @@ class isHoliday(Resource):
             return {
                 'holiday' : 'true'
             }
-        else : 
+        else :
             url = (
-                host + url_path + 
+                host + url_path +
                 f"?serviceKey=Js10J2bn%2B03d15sWQ6w2qep%2B3QWjnpJeOhm9N%2FzhRxVRngOLJsxVZ6ApZMHVFRlOj5zwGilQXZju8HVYTH0IXA%3D%3D" +
                 f"&solYear={datetime.today().year}" +
                 f"&solMonth={str(datetime.today().month).zfill(2)}" +
@@ -45,15 +45,15 @@ class isHoliday(Resource):
             # items 이 object 일때
             if type(items) == dict:
                 if str(items['locdate']) == today:
-                    result = 'true';
-            
+                    result = 'true'
+
             # items 이 array 일때
             else:
                 for item in items:
                     if str(item['locdate']) == today:
-                        result = 'true';
-            
-            select(history(host=pysql["host"], url_path="/isHoliday", result=result))
+                        result = 'true'
+
+            select(history(host=pysql["host"], url_path="/holiday/isHoliday", result=result))
 
             return {
                 'holiday' : result

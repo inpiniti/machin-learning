@@ -45,7 +45,6 @@ def select(_sql_cmd):
     session.commit()
     session.close()
 
-
     print(f'table select success : {timedelta(seconds=round(time.time() - start))}');
     print('==========================================\n')
 
