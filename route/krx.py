@@ -27,6 +27,26 @@ class currentPrice(Resource):
 @Krx.doc(params={'isuCd': '종목 코드 ex) KR7005930003'})
 @Krx.doc(params={'strtYymm': '시작년월 ex) 202301'})
 @Krx.doc(params={'endYymm': '종료년월 ex) 202307'})
+@Krx.doc(responses={
+    "TRD_DD": '기준 달',
+    "ISU_ABBRV": "종목명",
+    "ISU_SRT_CD": "종목코드",
+    "MKT_NM": "시장구분",
+    "MMEND_CLSPRC": "월종가",
+    "HGST_CLSPRC": "월최고가",
+    "LWST_CLSPRC": "월최저가",
+    "ISU_STD": "기준가",
+    "ISU_KURT": "첨도",
+    "COSKEW": "왜도",
+    "ISU_BETA": "베타",
+    "ISU_AMIBUD": "상장주식수",
+    "ISU_AMIVEST": "유동주식수",
+    "ISU_ZEROS": "무보수주식수",
+    "MM_ACC_TRDVOL": "월누적거래량",
+    "AVG_ACC_TRDVOL": "월평균거래량",
+    "MM_ACC_TRDVAL": "월누적거래대금",
+    "AVG_ACC_TRDVAL": "월평균거래대금",
+})
 class currentPrice(Resource):
     def get(self, isuCd, strtYymm, endYymm):
         """크롤링을 하여 krx 의 월별 종목의 주식의 현재 시세를 조회합니다."""
