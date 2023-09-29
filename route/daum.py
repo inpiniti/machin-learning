@@ -1,7 +1,12 @@
 from flask import request, render_template, Blueprint
 from flask_restx import Resource, Namespace
 
+import pandas as pd
 import requests
+import json
+
+from route.naver import crawlingFinancial
+from utils.db_utils import save_financials_to_db
 
 Daum = Namespace('daum', description='daum 증권사이트의 데이터를 조회합니다.')
 daum_host = 'https://finance.daum.net'
@@ -10,36 +15,18 @@ headers = {
     'User-Agent': 'PostmanRuntime/7.32.3'
 }
 
-@Daum.route('crawlingIndustries/<string:market>')
-@Daum.doc(params={'market': 'KOSPI 또는 KOSDAQ 을 입력해주세요.'})
+@Daum.route('/crawling/Industries')
+@Daum.doc(
+    responses={
+        "sectorCode": "업종코드",
+        "sectorName": "업종명",
+    }
+)
 class crawlingIndustries(Resource):
-    def get(self, market):
-        """크롤링을 하여 업종리스트를 조회합니다."""
+    def get(self):
+        """크롤링을 하여 업종리스트(Industry list)를 조회합니다."""
 
-        # Query Params
-        includedStockLimit = '2'
-        page = '1'
-        perPage = '40'
-        fieldName = 'changeRate'
-        order = 'desc'
-        #market = 'KOSPI' # or KOSDAQ
-        change = 'RISE'
-        includeStocks = 'true'
-        pagination = 'true'
-
-        daum_url = '/api/sectors/'
-        
-        query_params = {
-            'includedStockLimit' : includedStockLimit,
-            'page' : page,
-            'perPage' : perPage,
-            'fieldName' : fieldName,
-            'order' : order,
-            'market' : market,
-            'change' : change,
-            'includeStocks' : includeStocks,
-            'pagination' : pagination
-        }
+        daum_url = '/api/sector/wics/masters'
 
         url = (
             daum_host + 
@@ -48,61 +35,106 @@ class crawlingIndustries(Resource):
         
         response = requests.get(
             url, 
-            json=query_params, 
-            headers=headers)
-        
-        list = []
-        for i in response.json()["data"]:
-            list.append({
-                'symbolCode': i['symbolCode'],
-                'code': i['code'],
-                'sectorCode': i['sectorCode'],
-                'sectorName': i['sectorName'],
-                'date': i['date'],
-                'market': i['market'],
-                'change': i['change'],
-                'changePrice': i['changePrice'],
-                'changeRate': i['changeRate'],
-                'tradePrice': i['tradePrice'],
-                'prevClosingPrice': i['prevClosingPrice'],
-                'accTradeVolume': i['accTradeVolume'],
-                'accTradePrice': i['accTradePrice'],
-            })
-        
-        return list
-
-@Daum.route('crawlingStocks/<string:symbolCode>')
-@Daum.doc(params={'symbolCode': '업종코드를 입력해주세요. ex) KRD020020149'})
-class crawlingStocks(Resource):
-    def get(self, symbolCode):
-        """업종코드를 기반으로 종목을 조회합니다."""
-
-        # Query Params
-        page = '1'
-        perPage = '30'
-        fieldName = 'changeRate'
-        order = 'desc'
-        pagination = 'true'
-
-        daum_url = '/api/sectors/' + symbolCode + '/includedStocks'
-
-        query_params = {
-            'symbolCode' : symbolCode,
-            'page' : page,
-            'perPage' : perPage,
-            'fieldName' : fieldName,
-            'order' : order,
-            'pagination' : pagination
-        }
-
-        url = (
-            daum_host + 
-            daum_url
-        )
-
-        response = requests.get(
-            url, 
-            json=query_params, 
             headers=headers)
         
         return response.json()
+
+@Daum.route('/crawling/Stocks/<string:sector>')
+@Daum.doc(
+    params={'sector': '업종코드를 입력해주세요. ex) G101010'},
+    responses={
+        "code": '종목코드',
+        "symbolCode": '업종코드',
+        "name": '종목명',
+    }
+)
+class crawlingStocks(Resource):
+    def get(self, sector):
+        """업종코드를 기반으로 종목(Stock)을 조회합니다."""
+
+        # Query Params
+        page = '1'
+        perPage = '100'
+        fieldName = 'changeRate'
+        order = 'desc'
+        pagination = 'true'
+
+        daum_url = '/api/sector/wics/' + sector + '/stocks'
+
+        query_params = {
+            'symbolCode' : sector,
+            'page' : page,
+            'perPage' : perPage,
+            'fieldName' : fieldName,
+            'order' : order,
+            'pagination' : pagination
+        }
+
+        url = (
+            daum_host + 
+            daum_url
+        )
+
+        response = requests.get(url, json=query_params, headers=headers)
+        
+        # 첫 번째 페이지 데이터 추출
+        data = response.json()['data']
+        
+        # 전체 페이지 수 추출
+        total_pages = response.json()['totalPages']
+
+        # 전체 페이지 수가 1 이상인 경우, 추가 데이터 추출
+        if total_pages > 1:
+            for _page in range(2, total_pages+1):
+                query_params = {
+                    'symbolCode' : sector,
+                    'page' : _page,
+                    'perPage' : perPage,
+                    'fieldName' : fieldName,
+                    'order' : order,
+                    'pagination' : pagination
+                }
+                response = requests.get(url, json=query_params, headers=headers)
+                data += response.json()['data']
+        
+        result = []
+        for item in data:
+            result.append({
+                'code': item['code'],
+                'symbolCode': item['symbolCode'],
+                'name': item['name']
+            })
+        json_str = json.dumps(result, ensure_ascii=False, indent=2)
+        
+        return json.loads(json_str)
+
+@Daum.route('/crawling/Financials')
+class crawlingFinancials(Resource):
+    def get(self):
+        """크롤링을 하여 업종(Industry) -> 종목(Stock) -> 재무재표(Financial) 조회를 합니다."""
+
+        industries = crawlingIndustries().get();
+
+        new_financials = []
+        for industry in industries:
+            stocks = crawlingStocks().get(industry['sectorCode'])
+            for stock in stocks:
+                try:
+                    stock['sectorCode'] = industry['sectorCode']
+                    stock['sectorName'] = industry['sectorName']
+                    financials = crawlingFinancial().get(stock['symbolCode'])
+                    for financial in financials:
+                        try:
+                            financial.update(stock)
+                            new_financials.append(financial)
+                            save_financials_to_db(financial)
+                        except Exception as e:
+                            print(f"Error occurred: {e}")
+                            continue
+                except Exception as e:
+                    print(f"Error occurred: {e}")
+                    continue
+        
+        # save_financials_to_db(new_financials)
+
+        return new_financials
