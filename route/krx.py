@@ -47,7 +47,7 @@ class currentPrice(Resource):
     "MM_ACC_TRDVAL": "월누적거래대금",
     "AVG_ACC_TRDVAL": "월평균거래대금",
 })
-class currentPrice(Resource):
+class currentPrices(Resource):
     def get(self, isuCd, strtYymm, endYymm):
         """크롤링을 하여 krx 의 월별 종목의 주식의 현재 시세를 조회합니다."""
 

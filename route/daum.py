@@ -5,7 +5,7 @@ import pandas as pd
 import requests
 import json
 
-from route.naver import crawlingFinancial
+from route.naver import financialCurrentPrice
 from utils.db_utils import save_financials_to_db
 
 Daum = Namespace('daum', description='daum 증권사이트의 데이터를 조회합니다.')
@@ -116,23 +116,28 @@ class crawlingFinancials(Resource):
         industries = crawlingIndustries().get();
 
         new_financials = []
-        for industry in industries:
+        for index, industry in enumerate(industries):
+            print(f'{index} / sector : {len(industries)}')
             stocks = crawlingStocks().get(industry['sectorCode'])
-            for stock in stocks:
+            for jndex, stock in enumerate(stocks):
                 try:
                     stock['sectorCode'] = industry['sectorCode']
                     stock['sectorName'] = industry['sectorName']
-                    financials = crawlingFinancial().get(stock['symbolCode'])
-                    for financial in financials:
+                    financials = financialCurrentPrice().get(stock['symbolCode'], stock['code'])
+                    print(f'{index} / sector : {len(industries)} | {jndex} / stocks : {len(stocks)}')
+                    #print(f"{stock['sectorName']} ({index+1}), {stock['name']} ({jndex+1})")
+                    for kndex, financial in enumerate(financials):
                         try:
+                            print(f'{index} / sector : {len(industries)} | {jndex} / stocks : {len(stocks)} | {kndex} / financial : {len(financials)}')
                             financial.update(stock)
                             new_financials.append(financial)
+                            #print(financial)
                             save_financials_to_db(financial)
                         except Exception as e:
-                            print(f"Error occurred: {e}")
+                            print(f"Error occurred: (financials) {e}")
                             continue
                 except Exception as e:
-                    print(f"Error occurred: {e}")
+                    print(f"Error occurred: (stock) {e}")
                     continue
         
         # save_financials_to_db(new_financials)

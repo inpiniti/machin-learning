@@ -12,5 +12,50 @@ CREATE TABLE financials (
     sectorName VARCHAR(50) NOT NULL
 );
 
+CREATE TABLE financials (
+    year VARCHAR(10) NOT NULL,
+    sales DECIMAL(10, 2) NOT NULL,
+    operatingprofit DECIMAL(10, 2) NOT NULL,
+    netincome DECIMAL(10, 2) NOT NULL,
+    operatingprofitratio DECIMAL(10, 2) NOT NULL,
+    netprofitratio DECIMAL(10, 2) NOT NULL,
+    prevsales DECIMAL(10, 2) NOT NULL,
+    prevoperatingprofit DECIMAL(10, 2) NOT NULL,
+    prevnetincome DECIMAL(10, 2) NOT NULL,
+    prevoperatingprofitratio DECIMAL(10, 2) NOT NULL,
+    prevnetprofitratio DECIMAL(10, 2) NOT NULL,
+    saleschange DECIMAL(10, 2) NOT NULL,
+    operatingprofitchange DECIMAL(10, 2) NOT NULL,
+    netincomechange DECIMAL(10, 2) NOT NULL,
+    operatingprofitratiochange DECIMAL(10, 2) NOT NULL,
+    netprofitratiochange DECIMAL(10, 2) NOT NULL,
+    trdDd VARCHAR(10) NOT NULL,
+    isuAbbrv VARCHAR(50) NOT NULL,
+    isuSrtCd VARCHAR(10) NOT NULL,
+    mktNm VARCHAR(50) NOT NULL,
+    mmendClsprc DECIMAL(10, 2) NOT NULL,
+    hgstClsprc DECIMAL(10, 2) NOT NULL,
+    lwstClsprc DECIMAL(10, 2) NOT NULL,
+    isuStd DECIMAL(10, 6) NOT NULL,
+    isuKurt DECIMAL(10, 6) NOT NULL,
+    coskew DECIMAL(10, 6) NOT NULL,
+    isuBeta DECIMAL(10, 6) NOT NULL,
+    isuAmibud DECIMAL(20, 9) NOT NULL,
+    isuAmivest DECIMAL(20, 4) NOT NULL,
+    isuZeros INT NOT NULL,
+    mmAccTrdvol INT NOT NULL,
+    avgAccTrdvol INT NOT NULL,
+    mmAccTrdval BIGINT NOT NULL,
+    avgAccTrdval BIGINT NOT NULL,
+    nextmmendclsprc DECIMAL(10, 2) NOT NULL,
+    mmendclsprcchange DECIMAL(10, 2) NOT NULL,
+    code VARCHAR(20) NOT NULL,
+    symbolCode VARCHAR(20) NOT NULL,
+    name VARCHAR(50) NOT NULL,
+    sectorCode VARCHAR(20) NOT NULL,
+    sectorName VARCHAR(50) NOT NULL,
+    UNIQUE (code, year)
+);
+
 ALTER TABLE financials
 ADD PRIMARY KEY (year, code);
