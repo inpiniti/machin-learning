@@ -111,3 +111,71 @@ def save_financials_to_db(financial):
     # 연결 종료
     cursor.close()
     conn.close()
+
+def get_latest_date_from_financials():
+    # MySQL 연결 정보
+    config = {
+        'user': 'root',
+        'password': '!Wjd53850',
+        'host': '110.46.192.54',
+        'database': 'python-inpiniti'
+    }
+
+    # MySQL 연결
+    conn = mysql.connector.connect(**config)
+
+    #print('mysql connected')
+
+    # 커서 생성
+    cursor = conn.cursor()
+
+    # 데이터 삽입 쿼리
+    select_query = """
+        SELECT MAX(year) FROM financials;
+    """
+
+    cursor.execute(select_query)
+
+    # 쿼리 결과 읽기
+    latest_date = cursor.fetchone()[0]
+
+    # 변경사항 저장
+    conn.commit()
+
+    # 연결 종료
+    cursor.close()
+    conn.close()
+
+    return latest_date
+
+# 최신 날짜로 데이터를 조회
+def fetch_data_by_latest_date(latest_date):
+    # MySQL 연결 정보
+    config = {
+        'user': 'root',
+        'password': '!Wjd53850',
+        'host': '110.46.192.54',
+        'database': 'python-inpiniti'
+    }
+
+    # MySQL 연결
+    conn = mysql.connector.connect(**config)
+
+    # 커서 생성
+    cursor = conn.cursor()
+
+    # 데이터 삽입 쿼리
+    select_query = """
+        SELECT * FROM financials WHERE year = %s;
+    """
+
+    cursor.execute(select_query, (latest_date,))
+
+    # 쿼리 결과 읽기
+    latest_date_data = cursor.fetchall()
+
+    # 연결 종료
+    cursor.close()
+    conn.close()
+
+    return latest_date_data
