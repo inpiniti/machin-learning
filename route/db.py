@@ -50,9 +50,4 @@ class fetch_data_by_date(Resource):
         # 최신 날짜로 데이터를 조회
         latest_date_data = fetch_data_by_latest_date(date_data)
 
-        # 데이터를 JSON 객체로 변환
-        latest_date_data_json = jsonify(latest_date_data)
-
-        global_financials = latest_date_data_json
-
-        return global_financials
+        return json.loads(latest_date_data)
