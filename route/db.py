@@ -12,7 +12,7 @@ global_financials = None
     responses={
     }
 )
-class crawlingIndustries(Resource):
+class financials(Resource):
     def get(self):
         """financials 테이블에서 데이터를 조회함"""
 
@@ -30,8 +30,29 @@ class crawlingIndustries(Resource):
             # 데이터를 JSON 객체로 변환
             latest_date_data_json = jsonify(latest_date_data)
 
-            global_var = latest_date_data_json
+            global_financials = latest_date_data_json
         else:
             print("global_var is not None")
+
+        return global_financials
+    
+@Db.route('/financials/<string:date_data>')
+@Db.doc(
+    params={'date_data': '날짜 ex) 2023.09'},
+    responses={
+        'date_data': '날짜로 데이터를 조회합니다.'
+    }
+)
+class fetch_data_by_date(Resource):
+    def get(self, date_data):
+        """financials 테이블에서 데이터를 조회함"""
+
+        # 최신 날짜로 데이터를 조회
+        latest_date_data = fetch_data_by_latest_date(date_data)
+
+        # 데이터를 JSON 객체로 변환
+        latest_date_data_json = jsonify(latest_date_data)
+
+        global_financials = latest_date_data_json
 
         return global_financials
