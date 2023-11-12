@@ -150,8 +150,12 @@ def get_latest_date_from_financials():
 
     return latest_date
 
-# 최신 날짜로 데이터를 조회
-def fetch_data_by_latest_date(latest_date):
+# 날짜로 데이터를 조회 year
+# mktNm
+# name like
+# sectorCode
+# stock (symbolCode)
+def fetch_data_by_latest_date(year, mktNm, name, sectorCode, symbolCode):
     # MySQL 연결 정보
     config = {
         'user': 'root',
@@ -168,10 +172,16 @@ def fetch_data_by_latest_date(latest_date):
 
     # 데이터 삽입 쿼리
     select_query = """
-        SELECT * FROM financials WHERE year = %s;
+        SELECT *
+        FROM financials 
+        WHERE (year = %s OR %s IS NULL OR %s = '')
+        AND (mktNm = %s OR %s IS NULL OR %s = '')
+        AND (name LIKE %s OR %s IS NULL OR %s = '')
+        AND (sectorCode = %s OR %s IS NULL OR %s = '')
+        AND (symbolCode = %s OR %s IS NULL OR %s = '');
     """
 
-    cursor.execute(select_query, (latest_date,))
+    cursor.execute(select_query, (year, year, year, mktNm, mktNm, mktNm, name, name, name, sectorCode, sectorCode, sectorCode, symbolCode, symbolCode, symbolCode, ))
 
     # 쿼리 결과 읽기
     latest_date_data = cursor.fetchall()

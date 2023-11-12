@@ -1,53 +1,44 @@
 import json
-from flask import jsonify
-from flask_restx import Resource, Namespace
+from flask import jsonify,request
+from flask_restx import Resource, Namespace, fields
 from utils.db_utils import get_latest_date_from_financials, fetch_data_by_latest_date
 
 Db = Namespace('db', description='db 데이터를 조회합니다.')
 
 global_financials = None
 
-@Db.route('/financials')
+# 요청의 형식을 정의하는 모델을 생성
+financials_model = Db.model('Financials', {
+    'year': fields.String(description='날짜 ex) 2023.09'),
+    'mktNm': fields.String(description='시장명 ex) KOSPI, KOSDAQ'),
+    'name': fields.String(description='종목명 ex) 삼성전자'),
+    'sectorCode': fields.String(description='섹터코드 ex) G151010'),
+    'symbolCode': fields.String(description='종목코드 ex) A900290'),
+})
+
+@Db.route('/financials', methods=['POST'])
 @Db.doc(
-    responses={
-    }
 )
-class financials(Resource):
-    def get(self):
-        """financials 테이블에서 데이터를 조회함"""
-
-        global global_financials
-
-        if global_financials is None:
-            print("global_var is None")
-
-            # financials 에서 최신 날짜를 조회
-            latest_date = get_latest_date_from_financials()
-
-            # 최신 날짜로 데이터를 조회
-            latest_date_data = fetch_data_by_latest_date(latest_date)
-
-            # 데이터를 JSON 객체로 변환
-            latest_date_data_json = jsonify(latest_date_data)
-
-            global_financials = latest_date_data_json
-        else:
-            print("global_var is not None")
-
-        return global_financials
-    
-@Db.route('/financials/<string:date_data>')
-@Db.doc(
-    params={'date_data': '날짜 ex) 2023.09'},
-    responses={
-        'date_data': '날짜로 데이터를 조회합니다.'
-    }
-)
+@Db.expect(financials_model)  # 요청의 예상되는 형식을 지정
 class fetch_data_by_date(Resource):
-    def get(self, date_data):
+    def post(self):
         """financials 테이블에서 데이터를 조회함"""
+
+        # POST 요청의 body 데이터를 받음
+        data = request.get_json()
+
+        # 클라이언트가 보낸 요청이 JSON 형식이 아닌 경우
+        if data is None:
+            return jsonify({'error': 'Invalid JSON format'}), 400
+
+        # body 데이터에서 mktNm, name 등의 값을 받음
+        year = data.get('year')
+        mktNm = data.get('mktNm')
+        name = data.get('name')
+        sectorCode = data.get('sectorCode')
+        symbolCode = data.get('symbolCode')
 
         # 최신 날짜로 데이터를 조회
-        latest_date_data = fetch_data_by_latest_date(date_data)
+        latest_date_data = fetch_data_by_latest_date(year,mktNm, name, sectorCode, symbolCode)
 
         return json.loads(latest_date_data)
