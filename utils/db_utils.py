@@ -176,7 +176,7 @@ def fetch_data_by_latest_date(year, mktNm, name, sectorCode, symbolCode):
         FROM financials 
         WHERE (year = %s OR %s IS NULL OR %s = '')
         AND (mktNm = %s OR %s IS NULL OR %s = '')
-        AND (name LIKE %s OR %s IS NULL OR %s = '')
+        AND (name LIKE CONCAT('%', %s, '%') OR %s IS NULL OR %s = '')
         AND (sectorCode = %s OR %s IS NULL OR %s = '')
         AND (symbolCode = %s OR %s IS NULL OR %s = '');
     """
