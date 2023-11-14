@@ -14,6 +14,8 @@ financials_model = Db.model('Financials', {
     'name': fields.String(description='종목명 ex) 삼성전자'),
     'sectorCode': fields.String(description='섹터코드 ex) G151010'),
     'symbolCode': fields.String(description='종목코드 ex) A900290'),
+    # 페이징 처리를 위한 파라미터
+    'page': fields.Integer(description='페이지 번호'),
 })
 
 @Db.route('/financials', methods=['POST'])
@@ -37,8 +39,9 @@ class fetch_data_by_date(Resource):
         name = data.get('name')
         sectorCode = data.get('sectorCode')
         symbolCode = data.get('symbolCode')
+        page = data.get('page')
 
         # 최신 날짜로 데이터를 조회
-        latest_date_data = fetch_data_by_latest_date(year,mktNm, name, sectorCode, symbolCode)
+        latest_date_data = fetch_data_by_latest_date(year,mktNm, name, sectorCode, symbolCode, page)
 
         return json.loads(latest_date_data)
