@@ -2,6 +2,7 @@ import json
 from flask import jsonify,request
 from flask_restx import Resource, Namespace, fields
 from utils.db_utils import get_latest_date_from_financials, fetch_data_by_latest_date
+from utils.db.trained_model import get_trained_model_dataframe
 
 Db = Namespace('db', description='db 데이터를 조회합니다.')
 
@@ -45,3 +46,11 @@ class fetch_data_by_date(Resource):
         latest_date_data = fetch_data_by_latest_date(year,mktNm, name, sectorCode, symbolCode, page)
 
         return json.loads(latest_date_data)
+
+@Db.route('/trained_model', methods=['GET'])
+class fetch_data_by_date(Resource):
+    def get(self):
+        """trained_model 테이블에서 데이터를 조회함"""
+        trained_model_data = get_trained_model_dataframe()
+
+        return json.loads(trained_model_data)

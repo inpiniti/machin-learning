@@ -93,10 +93,13 @@ class financialCurrentPrice(Resource):
         endYymm = today_str
 
         try:
+            # 재무재표 조회
             financials = crawlingFinancial().get(symbolCode)
+            # krx 의 월별 종목의 주식의 현재 시세를 조회
             currentPrice = currentPrices().get(isuCd, strtYymm, endYymm)
             
             merged_data = merge_json_data(financials, currentPrice)
+            # 다음 분기의 MMEND_CLSPRC 필드를 추가
             merged_data = add_next_quarter_data(merged_data)
 
             for data in merged_data:

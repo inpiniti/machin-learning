@@ -11,6 +11,93 @@ def calculate_limit_offset(page):
     offset = (page - 1) * limit
     return limit, offset
 
+def save_dart_to_db(df):
+    # MySQL 연결 정보
+    config = {
+        'user': 'root',
+        'password': '!Wjd53850',
+        'host': '110.46.192.54',
+        'database': 'python-inpiniti'
+    }
+
+    # MySQL 연결
+    conn = mysql.connector.connect(**config)
+
+    # 커서 생성
+    cursor = conn.cursor()
+
+    # 데이터 삽입 쿼리
+    insert_query = """
+        INSERT INTO dart (
+            `year`, 
+            `month`, 
+            isu_abbrv, 
+            isu_srt_cd, 
+            mkt_nm, 
+            sales, 
+            sales_change_3, 
+            sales_change_6, 
+            sales_change_9, 
+            sales_change_12, 
+            operating_profit, 
+            operating_profit_change_3, 
+            operating_profit_change_6, 
+            operating_profit_change_9, 
+            operating_profit_change_12, 
+            net_profit, 
+            net_profit_change_3, 
+            net_profit_change_6, 
+            net_profit_change_9, 
+            net_profit_change_12, 
+            mmend_clsprc, 
+            mmend_clsprc_change_3, 
+            mmend_clsprc_change_6, 
+            mmend_clsprc_change_9, 
+            mmend_clsprc_change_12, 
+            next_mmend_clsprc_change
+        ) VALUES (
+            %(year)s, 
+            %(month)s, 
+            %(isu_abbrv)s, 
+            %(isu_srt_cd)s, 
+            %(mkt_nm)s, 
+            %(sales)s, 
+            %(sales_change_3)s, 
+            %(sales_change_6)s, 
+            %(sales_change_9)s, 
+            %(sales_change_12)s, 
+            %(operating_profit)s, 
+            %(operating_profit_change_3)s, 
+            %(operating_profit_change_6)s, 
+            %(operating_profit_change_9)s, 
+            %(operating_profit_change_12)s, 
+            %(net_profit)s, 
+            %(net_profit_change_3)s, 
+            %(net_profit_change_6)s, 
+            %(net_profit_change_9)s, 
+            %(net_profit_change_12)s, 
+            %(mmend_clsprc)s, 
+            %(mmend_clsprc_change_3)s, 
+            %(mmend_clsprc_change_6)s, 
+            %(mmend_clsprc_change_9)s, 
+            %(mmend_clsprc_change_12)s, 
+            %(next_mmend_clsprc_change)s
+        );
+    """
+
+    print("Number of placeholders in insert_query:", insert_query.count("%"))
+    print("Number of columns in df:", len(df.columns))
+
+    data = df.to_dict('records')
+    cursor.executemany(insert_query, data)
+
+    # 변경사항 저장
+    conn.commit()
+
+    # 연결 종료
+    cursor.close()
+    conn.close()
+
 def save_financials_to_db(financial):
 
     #print('save_financials_to_db start')
@@ -263,29 +350,6 @@ def get_financials_dataframe():
             netincomechange, #: string; // 순이익 변동
             operatingprofitratiochange, #: string; // 영업이익률 변동
             netprofitratiochange, #: string; // 순이익률 변동
-            sales, #: string; // 매출
-            operatingprofit, #: string; // 영업이익
-            netincome, #: string; // 순이익
-            operatingprofitratio, #: string; // 영업이익률
-            netprofitratio, #: string; // 순이익률
-            prevsales, #: string; // 이전 매출
-            prevoperatingprofit, #: string; // 이전 영업이익
-            prevnetincome, #: string; // 이전 순이익
-            prevoperatingprofitratio, #: string; // 이전 영업이익률
-            prevnetprofitratio, #: string; // 이전 순이익률
-            mmendClsprc, #: string; // 월말 종가
-            hgstClsprc, #: string; // 최고 종가
-            lwstClsprc, #: string; // 최저 종가
-            isuStd, #: string; // 표준 편차
-            isuKurt, #: string; // 첨도
-            coskew, #: string; // 왜도
-            isuBeta, #: string; // 베타
-            isuAmibud, #: string; // 아미후드 계수
-            isuZeros, #: number; // 제로 수
-            mmAccTrdvol, #: number; // 월 누적 거래량
-            avgAccTrdvol, #: number; // 평균 누적 거래량
-            mmAccTrdval, #: number; // 월 누적 거래액
-            avgAccTrdval, #: number; // 평균 누적 거래액
             mmendclsprcchange #: string; // 월말 종가 변동
         from financials f 
         where nextmmendclsprc != 0;

@@ -113,16 +113,21 @@ class crawlingFinancials(Resource):
     def get(self):
         """크롤링을 하여 업종(Industry) -> 종목(Stock) -> 재무재표(Financial) 조회를 합니다."""
 
+        # 크롤링
         industries = crawlingIndustries().get();
 
         new_financials = []
         for index, industry in enumerate(industries):
             print(f'{index} / sector : {len(industries)}')
+
+            # 크롤링
             stocks = crawlingStocks().get(industry['sectorCode'])
             for jndex, stock in enumerate(stocks):
                 try:
                     stock['sectorCode'] = industry['sectorCode']
                     stock['sectorName'] = industry['sectorName']
+
+                    # 계산
                     financials = financialCurrentPrice().get(stock['symbolCode'], stock['code'])
                     print(f'{index} / sector : {len(industries)} | {jndex} / stocks : {len(stocks)}')
                     #print(f"{stock['sectorName']} ({index+1}), {stock['name']} ({jndex+1})")
