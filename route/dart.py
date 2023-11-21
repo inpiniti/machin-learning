@@ -34,5 +34,5 @@ class collect_data(Resource):
 
                     save_dart_to_db(dart_krx)
                 except Exception as e:
-                    print(f"{name : } An error occurred: {e}")
+                    print(f"{name}: An error occurred: {e}")
         return '데이터를 수집합니다.'
