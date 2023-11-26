@@ -1,9 +1,10 @@
+import datetime
 import ifinance
 import pandas as pd
 
 from flask import jsonify
 from flask_restx import Resource, Namespace
-from utils.db_utils import save_dart_to_db, get_dart_to_dataframe
+from utils.db_utils import save_dart_to_db, get_dart_to_dataframe, select_db
 from utils.db.error import save_error
 
 Dart = Namespace('dart', description='dart')
@@ -32,26 +33,29 @@ class collect_data(Resource):
                 symbolCode = stock['symbolCode']
                 symbolCode = symbolCode[1:]
                 code = stock['code']
-                try:
-                    dart = ifinance.get_financial_dataframe(symbolCode)
-                except Exception as e:
-                    save_error(f"collect_data > get_financial_dataframe > {name}", symbolCode, e)
-                try:
-                    krx = ifinance.get_monthly_stock_dataframe(code)
-                except Exception as e:
-                    save_error(f"collect_data > get_monthly_stock_dataframe > {name}", code, e)
-                try:
-                    dart_krx = ifinance.merge_financial_and_monthly_stock_dataframe(dart, krx)
-                except Exception as e:
-                    save_error(f"collect_data > merge_financial_and_monthly_stock_dataframe > {name}", krx.to_string() + dart.to_string(), e)
 
-                    # NaN 값을 포함하는 행을 삭제
-                    dart_krx = dart_krx.dropna()
-                try:
-                    save_dart_to_db(dart_krx)
-                except Exception as e:
-                    save_error(f"collect_data > save_dart_to_db > {name}", dart_krx.to_string(), e)
-                
+                # 이미 저장되어 있으면 수집을 굳이 할필요는 없을거 같음
+                # 조건문으로 분기처리                    
+                if is_already_saved(symbolCode):
+                    try:
+                        dart = ifinance.get_financial_dataframe(symbolCode)
+                    except Exception as e:
+                        save_error(f"collect_data > get_financial_dataframe > {name}", symbolCode, e)
+                    try:
+                        krx = ifinance.get_monthly_stock_dataframe(code)
+                    except Exception as e:
+                        save_error(f"collect_data > get_monthly_stock_dataframe > {name}", code, e)
+                    try:
+                        dart_krx = ifinance.merge_financial_and_monthly_stock_dataframe(dart, krx)
+                    except Exception as e:
+                        save_error(f"collect_data > merge_financial_and_monthly_stock_dataframe > {name}", krx.to_string() + dart.to_string(), e)
+
+                        # NaN 값을 포함하는 행을 삭제
+                        dart_krx = dart_krx.dropna()
+                    try:
+                        save_dart_to_db(dart_krx)
+                    except Exception as e:
+                        save_error(f"collect_data > save_dart_to_db > {name}", dart_krx.to_string(), e)
         return '데이터를 수집합니다.'
     
 @Dart.route('/get_data')
@@ -63,3 +67,29 @@ class get_data(Resource):
     
         # Assuming `df` is your DataFrame
         return jsonify(df.to_dict(orient='records'))
+    
+# 이미 저장되어 있으면 수집을 굳이 할필요는 없을거 같음
+# 조건문으로 분기처리 
+def is_already_saved(symbolCode):
+    # 조건문에 최근 년도와 월도 넣어서 비교해야 하는데,
+    # year 은 올해 년도
+    year = datetime.now().year
+    # month 는 3의 배수로 가장 최근
+    month = get_nearest_previous_multiple_of_three(datetime.now().month)
+
+    sql = f"""
+        SELECT * FROM dart
+        WHERE symbolCode = '{symbolCode}'
+        AND year = '{year}'
+        AND month = '{month}'
+    """
+    df = select_db(sql)
+    if len(df) == 0:
+        return False
+    else:
+        return True
+
+# 현재 년도와 월을 기준으로 가장 최근의 년도와 월을 가져옵니다.
+# 3의 배수로 가장 최근
+def get_nearest_previous_multiple_of_three(month):
+    return "{:02}".format(((month - 1) // 3) * 3 + 1)
