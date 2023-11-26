@@ -1,9 +1,13 @@
 import pickle
 import mysql.connector
 import json
-from decimal import Decimal
-
 import pandas as pd
+
+from datetime import datetime, timedelta
+from decimal import Decimal
+from sqlalchemy import create_engine
+
+from keras.models import model_from_json
 
 # 페이지 번호를 기반으로 LIMIT와 OFFSET을 계산하여 반환
 def calculate_limit_offset(page):
@@ -98,7 +102,42 @@ def save_dart_to_db(df):
     cursor.close()
     conn.close()
 
-def get_dart_to_dataframe():
+def get_dart_to_dataframe(market, analysis_period, predict=False):
+
+    # market all 이면 전체 조회
+    if market == 'all':
+        market = ''
+    # market 이 all 이 아니면, market 을 포함하는 데이터만 조회
+    else:
+        market = f"AND mkt_nm = '{market}'"
+
+    # 현재 날짜를 얻습니다.
+    now = datetime.now()
+
+    # analysis_period 이 3이면 최근 3달간
+    if analysis_period == '3':
+        # 3달 전의 날짜를 계산합니다.
+        three_months_ago = now - timedelta(days=90)
+
+        # 날짜를 'YYYY', 'MM' 형식의 문자열로 변환합니다.
+        year_str = three_months_ago.strftime('%Y')
+        month_str = three_months_ago.strftime('%m')
+
+        analysis_period = f"AND year >= '{year_str}' AND month >= '{month_str}'"
+    # analysis_period 이 12이면 최근 1년간
+    # `year`, `month` 을 참고하여 최근 1년 where
+    elif analysis_period == '12':
+        # 1년 전의 날짜를 계산합니다.
+        one_year_ago = now - timedelta(days=365)
+
+        # 날짜를 'YYYY', 'MM' 형식의 문자열로 변환합니다.
+        year_str = one_year_ago.strftime('%Y')
+        month_str = one_year_ago.strftime('%m')
+
+        analysis_period = f"AND year >= '{year_str}' AND month >= '{month_str}'"
+    # analysis_period 이 2015이면 전체
+    elif analysis_period == 'all':
+        analysis_period = ''
 
     # 학습을 위해 `year`, `month`, isu_abbrv, isu_srt_cd, mkt_nm, sales 이 필드는 뺌
     # 'mmend_clsprc', 'net_profit' 'operating_profit' 이 3개 필드도
@@ -108,10 +147,19 @@ def get_dart_to_dataframe():
     net_profit_change_3, net_profit_change_6, net_profit_change_9, net_profit_change_12, 
     mmend_clsprc_change_3, mmend_clsprc_change_6, mmend_clsprc_change_9, mmend_clsprc_change_12, 
     next_mmend_clsprc_change
-    FROM `python-inpiniti`.dart;
+    FROM `python-inpiniti`.dart
+    WHERE 1=1
     """
 
-    return select_db(query)
+    # predict 가 true 이면 모든 컬럼 조회
+    if predict:
+        query = """
+        SELECT *
+        FROM `python-inpiniti`.dart
+        WHERE 1=1
+        """
+
+    return select_db(query + analysis_period + market)
 
 def save_financials_to_db(financial):
 
@@ -399,9 +447,9 @@ def get_financials_dataframe():
 #    algorithm VARCHAR(255),
 #    accuracy FLOAT
 #);
-def save_trained_model(model, algorithm, accuracy):
+def save_trained_model(model, algorithm, market, analysis_period):
     # 모델 직렬화 및 바이트 배열로 변환
-    serialized_model = pickle.dumps(model)
+    serialized_model = model.to_json()
 
     # MySQL 연결 정보
     config = {
@@ -418,8 +466,12 @@ def save_trained_model(model, algorithm, accuracy):
     cursor = conn.cursor()
 
     # trained_model 테이블에 모델 저장 (테이블이 이미 존재한다고 가정)
-    query = f"INSERT INTO trained_model (model, algorithm, accuracy) VALUES (%s, %s, %s)"
-    cursor.execute(query, (serialized_model, algorithm, accuracy,))
+    query = f"""
+        INSERT INTO `python-inpiniti`.trained_model
+        (model, `algorithm`, market, analysis_period) 
+        VALUES (%s, %s, %s, %s)
+    """
+    cursor.execute(query, (serialized_model, algorithm, market, analysis_period))
 
     # 변경사항 커밋
     conn.commit()
@@ -465,44 +517,58 @@ def select_db(query):
         'user': 'root',
         'password': '!Wjd53850',
         'host': '110.46.192.54',
+        'database': 'python-inpiniti',
+        'port': 3306
+    }
+    print('query:', query)
+
+    # MySQL 데이터베이스에 연결
+    engine = create_engine(f"mysql+mysqlconnector://{config['user']}:{config['password']}@{config['host']}:{config['port']}/{config['database']}", echo=False)
+
+    # Assuming `conn` is your database connection
+    df = pd.read_sql_query(query, engine)
+
+    # 명시적으로 연결을 종료
+    engine.dispose()
+
+    return df
+
+def select_model(algorithm, market, analysis_period):
+    # MySQL 연결 정보
+    config = {
+        'user': 'root',
+        'password': '!Wjd53850',
+        'host': '110.46.192.54',
         'database': 'python-inpiniti'
     }
 
-    # MySQL 연결
+    # MySQL 데이터베이스에 연결
     conn = mysql.connector.connect(**config)
 
     # 커서 생성
-    #cursor = conn.cursor()
+    cursor = conn.cursor()
 
-    # 데이터 삽입 쿼리
-    #cursor.execute(query)
+    # trained_model 테이블에서 모델 검색 (테이블이 이미 존재한다고 가정)
+    query=f"""
+        SELECT model FROM `python-inpiniti`.trained_model
+        WHERE algorithm = '{algorithm}'
+        AND market = '{market}'
+        AND analysis_period = '{analysis_period}'
+    """
 
-    # Assuming `conn` is your database connection
-    df = pd.read_sql_query(query, conn)
+    print(query)
 
-    # 쿼리 결과 읽기
-    #latest_date_data = cursor.fetchall()
+    cursor.execute(query)
 
-    # 컬럼 이름 가져오기
-    #column_names = [desc[0] for desc in cursor.description]
+    # 검색된 모델을 Python 객체로 역직렬화
+    model_data = cursor.fetchone()[0]
 
-    # JSON 형식으로 변환
-    #json_data = []
-    #for row in latest_date_data:
-    #    json_data.append(dict(zip(column_names, row)))
-
-    # DataFrame 객체로 변환
-    #df = pd.DataFrame(json_data)
-
-
-    # 변경사항 저장
-    conn.commit()
+    model = model_from_json(model_data)
 
     # 연결 종료
-    #cursor.close()
     conn.close()
 
-    return df
+    return model
 
 # db에 insert 하는 함수
 def insert_db(query):

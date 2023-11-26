@@ -1,6 +1,7 @@
 import mysql.connector
 import json
 from decimal import Decimal
+from utils.db_utils import select_db, insert_db
 
 # trained_model 테이블에서 데이터를 조회하여 dataframe 으로 반환
 def get_trained_model_dataframe():
@@ -45,6 +46,24 @@ def get_trained_model_dataframe():
     conn.close()
 
     return json.dumps(json_data, default=decimal_default)
+
+# insert_db() 를 이용하여 trained_model 테이블에 데이터를 삽입하는 함수
+# 인자로 학습한 모델, 알고리즘, 시장, 기간을 받음
+def save_trained_model(model, algorithm, market, analysis_period):
+    insert_db(query=f"""
+        INSERT INTO `python-inpiniti`.trained_model
+        (model, `algorithm`, market, analysis_period)
+        VALUES('{model}', '{algorithm}', '{market}', '{analysis_period}');
+    """)
+
+# trained_model 테이블에서 데이터를 조회
+def get_trained_model(algorithm, market, analysis_period):
+    return select_db(query=f"""
+        SELECT * FROM `python-inpiniti`.trained_model
+        WHERE algorithm = '{algorithm}'
+        AND market = '{market}'
+        AND analysis_period = '{analysis_period}'
+    """)
 
 def decimal_default(obj):
     if isinstance(obj, Decimal):

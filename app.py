@@ -8,6 +8,7 @@ from route.investing import Investing
 from route.krx import Krx
 from route.db import Db
 from route.dart import Dart
+from route.ai import Ai
 
 app = Flask(__name__, template_folder="templates")
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
@@ -22,6 +23,7 @@ api.add_namespace(Investing, '/investing')
 api.add_namespace(Krx, '/krx')
 api.add_namespace(Db, '/db')
 api.add_namespace(Dart, '/dart')
+api.add_namespace(Ai, '/ai')
 
 if(__name__=='__main__'):
     app.run(host='0.0.0.0', port=5001)
