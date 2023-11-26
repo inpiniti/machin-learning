@@ -98,6 +98,21 @@ def save_dart_to_db(df):
     cursor.close()
     conn.close()
 
+def get_dart_to_dataframe():
+
+    # 학습을 위해 `year`, `month`, isu_abbrv, isu_srt_cd, mkt_nm, sales 이 필드는 뺌
+    # 'mmend_clsprc', 'net_profit' 'operating_profit' 이 3개 필드도
+    query = """
+    SELECT sales_change_3, sales_change_6, sales_change_9, sales_change_12, 
+    operating_profit_change_3, operating_profit_change_6, operating_profit_change_9, operating_profit_change_12, 
+    net_profit_change_3, net_profit_change_6, net_profit_change_9, net_profit_change_12, 
+    mmend_clsprc_change_3, mmend_clsprc_change_6, mmend_clsprc_change_9, mmend_clsprc_change_12, 
+    next_mmend_clsprc_change
+    FROM `python-inpiniti`.dart;
+    """
+
+    return select_db(query)
+
 def save_financials_to_db(financial):
 
     #print('save_financials_to_db start')
@@ -443,3 +458,74 @@ def predict_with_saved_model(data, model_id):
     prediction = model.predict(data)
 
     return prediction
+
+def select_db(query):
+    # MySQL 연결 정보
+    config = {
+        'user': 'root',
+        'password': '!Wjd53850',
+        'host': '110.46.192.54',
+        'database': 'python-inpiniti'
+    }
+
+    # MySQL 연결
+    conn = mysql.connector.connect(**config)
+
+    # 커서 생성
+    #cursor = conn.cursor()
+
+    # 데이터 삽입 쿼리
+    #cursor.execute(query)
+
+    # Assuming `conn` is your database connection
+    df = pd.read_sql_query(query, conn)
+
+    # 쿼리 결과 읽기
+    #latest_date_data = cursor.fetchall()
+
+    # 컬럼 이름 가져오기
+    #column_names = [desc[0] for desc in cursor.description]
+
+    # JSON 형식으로 변환
+    #json_data = []
+    #for row in latest_date_data:
+    #    json_data.append(dict(zip(column_names, row)))
+
+    # DataFrame 객체로 변환
+    #df = pd.DataFrame(json_data)
+
+
+    # 변경사항 저장
+    conn.commit()
+
+    # 연결 종료
+    #cursor.close()
+    conn.close()
+
+    return df
+
+# db에 insert 하는 함수
+def insert_db(query):
+    # MySQL 연결 정보
+    config = {
+        'user': 'root',
+        'password': '!Wjd53850',
+        'host': '110.46.192.54',
+        'database': 'python-inpiniti'
+    }
+
+    # MySQL 연결
+    conn = mysql.connector.connect(**config)
+
+    # 커서 생성
+    cursor = conn.cursor()
+
+    # 데이터 삽입 쿼리
+    cursor.execute(query)
+
+    # 변경사항 커밋
+    conn.commit()
+
+    # 연결 종료
+    cursor.close()
+    conn.close()
