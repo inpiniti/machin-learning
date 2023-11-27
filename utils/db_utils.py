@@ -448,8 +448,13 @@ def get_financials_dataframe():
 #    accuracy FLOAT
 #);
 def save_trained_model(model, algorithm, market, analysis_period):
-    # 모델 직렬화 및 바이트 배열로 변환
-    serialized_model = model.to_json()
+    # algorithm 의 값이 'Deep Learning' 이 아니면 모델을 직렬화
+    if algorithm != 'Deep Learning':
+        # 모델 직렬화 및 바이트 배열로 변환
+        serialized_model = pickle.dumps(model)
+    else:
+        # 모델 직렬화 및 바이트 배열로 변환
+        serialized_model = model.to_json()
 
     # MySQL 연결 정보
     config = {
@@ -563,7 +568,11 @@ def select_model(algorithm, market, analysis_period):
     # 검색된 모델을 Python 객체로 역직렬화
     model_data = cursor.fetchone()[0]
 
-    model = model_from_json(model_data)
+    # algorithm 의 값이 'Deep Learning' 이 아니면 모델을 직렬화
+    if algorithm != 'Deep Learning':
+        model = pickle.loads(model_data)
+    else:
+        model = model_from_json(model_data)
 
     # 연결 종료
     conn.close()
