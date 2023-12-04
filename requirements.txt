@@ -13,3 +13,4 @@ keras==2.13.1
 inpinitiFinance
 tensorflow==2.13.0
 sqlalchemy==2.0.19
+flask_socketio==5.3.6
